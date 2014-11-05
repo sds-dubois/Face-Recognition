@@ -4,5 +4,5 @@ FIND_PACKAGE(OpenCV REQUIRED)
 
 PROJECT(Projet552)
 
-ADD_EXECUTABLE(faceDetection faceDetection.cpp)
-TARGET_LINK_LIBRARIES(faceDetection ${OpenCV_LIBS})
+ADD_EXECUTABLE(facematching main.cpp faceDetection.h faceDetection.cpp)
+TARGET_LINK_LIBRARIES(facematching ${OpenCV_LIBS})
