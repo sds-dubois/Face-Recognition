@@ -8,7 +8,7 @@
 
 using namespace std;
 using namespace cv;
-
+/*
 vector<Rect> detectAndDisplay(CascadeClassifier face_classifier, Mat frame )
 {
     vector<Rect> faces;
@@ -66,4 +66,4 @@ int detectFacesWebcam(){
     }
     return 0;
 }
-
+*/

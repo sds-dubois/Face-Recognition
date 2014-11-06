@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <stdio.h>
-
+/*
 using namespace std;
 using namespace cv;
 
 vector<Rect> detect(CascadeClassifier face_classifier, Mat frame);
 int detectFacesWebcam();
-
+*/
