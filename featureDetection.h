@@ -4,11 +4,13 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/ml/ml.hpp>
 #include <iostream>
 #include <stdio.h>
 
 using namespace std;
 using namespace cv ;
 
-void buildSiftDictionary(void) ;
+void buildSiftDictionary(int i) ;
 Mat getSiftDescriptor(int i) ;
+float createClassifier(int n) ;

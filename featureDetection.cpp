@@ -6,6 +6,7 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/ml/ml.hpp>
 #include <iostream>
 #include <stdio.h>
 
@@ -13,7 +14,7 @@
 using namespace std;
 using namespace cv;
 
-void buildSiftDictionary(void){
+void buildSiftDictionary(int i){
 	//Step 1 - Obtain the set of bags of features.
 	initModule_nonfree() ;
 	//to store the input file names
@@ -60,7 +61,7 @@ void buildSiftDictionary(void){
 	
 	//Construct BOWKMeansTrainer
 	//the number of bags
-	int dictionarySize=2;
+	int dictionarySize=i;
 	//define Term Criteria
 	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
 	//retries number
@@ -143,4 +144,107 @@ Mat getSiftDescriptor(int i) {
 	cout << "C'est fini" << endl ;
 
 	return bowDescriptor ;
+}
+
+float createClassifier(int n) {
+
+    //prepare BOW descriptor extractor from the dictionary
+    Mat dictionary; 
+    FileStorage fs("../dictionary.yml", FileStorage::READ);
+    fs["vocabulary"] >> dictionary;
+    fs.release();    
+    cout << "dictionary loaded" << endl ;
+
+    //create a nearest neighbor matcher
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; 
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ; 
+
+    //create BoF (or BoW) descriptor extractor
+    BOWImgDescriptorExtractor bowDE(extractor,matcher);
+    //Set the dictionary with the vocabulary we created in the first step
+    bowDE.setVocabulary(dictionary);
+
+    //To store the image file name
+    char * filename = new char[100];
+    //To store the image tag name - only for save the descriptor in a file
+    char * imageTag = new char[10];
+    Mat input ;
+    //To store the keypoints that will be extracted by SIFT
+    vector<KeyPoint> keypoints;  
+	//To store the BoW (or BoF) representation of the image
+    Mat bowDescriptor;   
+
+	Mat samples(0,dictionary.rows,CV_32FC1);
+    Mat labels(0,1,CV_32FC1);
+
+	for(int f=0;f<5;f++){        //Barack Obama
+		//create the file name of an image
+		sprintf(filename,"../dictionary/%i.jpg",f);
+		cout << filename << endl ;
+		//open the file
+		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+      
+		//Detect SIFT keypoints (or feature points)
+		detector->detect(input,keypoints);
+		//extract BoW (or BoF) descriptor from given image
+		bowDE.compute(input,keypoints,bowDescriptor);
+		samples.push_back(bowDescriptor) ;
+	}
+
+	for(int f=5;f<10;f++){        //Hollande
+		//create the file name of an image
+		sprintf(filename,"../dictionary/%i.jpg",f);
+		cout << filename << endl ;
+		//open the file
+		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+      
+		//Detect SIFT keypoints (or feature points)
+		detector->detect(input,keypoints);
+		//extract BoW (or BoF) descriptor from given image
+		bowDE.compute(input,keypoints,bowDescriptor);
+		samples.push_back(bowDescriptor) ;
+	}
+
+	Mat temp ;
+	temp = Mat::ones(5, 1, CV_32FC1) ;
+	labels.push_back(temp) ;
+	temp = Mat::zeros(5, 1, CV_32FC1) ;
+	labels.push_back(temp) ;         
+	cout << "Images chargees et analysees" << endl ;
+	cout << samples.rows << " " << labels.rows << endl ;
+
+	cout << "Samples : " << samples << endl << endl ;
+	cout << "Labels : " << labels << endl << endl ;
+
+	CvSVM classifier;
+	CvSVMParams params;
+    params.svm_type    = CvSVM::C_SVC;
+    params.kernel_type = CvSVM::LINEAR;
+    params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+	Mat samples_32f ;
+	samples.convertTo(samples_32f, CV_32F);
+	if(samples.rows != 0){ 
+		classifier.train(samples_32f,labels,Mat(),Mat(),params);		
+	}
+	else
+		cout << "Samples n'a qu'une ligne !" << endl ;
+	
+	cout << "Classifieur cree" << endl ;
+
+	sprintf(filename,"../dictionary/%i.jpg",n);
+	cout << "Test : " << filename << endl ;
+	//open the file
+	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+	//Detect SIFT keypoints (or feature points)
+	detector->detect(input,keypoints);
+	//extract BoW (or BoF) descriptor from given image
+	bowDE.compute(input,keypoints,bowDescriptor);
+
+
+	float response = classifier.predict(bowDescriptor) ;
+	cout << response << endl ;
+
+	return response ;
 }

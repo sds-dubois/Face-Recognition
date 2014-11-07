@@ -7,6 +7,7 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/ml/ml.hpp>
 #include <iostream>
 #include <stdio.h>
 
@@ -19,16 +20,21 @@ int main(void
 	){
     //return detectFacesWebcam();
 	
-	cout << "Image a comparer" << endl ;
+	cout << "Dictionary size :" << endl ;
+	int j ;
+	cin >> j ;
+	
+	cout << "Image a classifier :" << endl ;
 	int i ;
 	cin >> i ;
 
-	buildSiftDictionary() ;
+	buildSiftDictionary(j) ;
 	cout << "build OK" << endl ;
 
-	Mat descriptor = getSiftDescriptor(i) ;
-	
-	cout << "Descriptor = " << descriptor << endl ;
+	//Mat descriptor = getSiftDescriptor(i) ;
+	//cout << "Descriptor = " << descriptor << endl ;
+
+	cout << "L'image demandee est : " << createClassifier(i) << endl ;;
 
 	return 0 ;
 
