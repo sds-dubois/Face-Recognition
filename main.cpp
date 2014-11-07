@@ -4,6 +4,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/core/core.hpp>
 #include <iostream>
 #include <stdio.h>
 
@@ -18,7 +21,7 @@ int main(void
 	//void buildDictionary(void) ;
 
 	//Step 1 - Obtain the set of bags of features.
-
+		initModule_nonfree() ;
 	//to store the input file names
 	char * filename = new char[100];       
 	//to store the current input image
@@ -31,8 +34,8 @@ int main(void
 	//To store all the descriptors that are extracted from all the images.
 	Mat featuresUnclustered;
 	//The SIFT feature extractor and descriptor
-	Ptr<FeatureDetector> detector = FeatureDetector::create("ORB");
-	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("ORB");
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 
 
 	//Images to extract feature descriptors and build the vocabulary
@@ -60,7 +63,7 @@ int main(void
 	}    
 
 	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
-
+	
 	//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=2;
@@ -74,38 +77,40 @@ int main(void
 	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
 	//bowTrainer.add(featuresUnclustered) ;
 	//cluster the feature vectors
-	Mat feature ;
-	featuresUnclustered.convertTo(feature,CV_32FC1);
-	Mat dictionary=bowTrainer.cluster(feature);
+	//Mat feature ;
+	//featuresUnclustered.convertTo(feature,CV_32FC1);
+	Mat dictionary=bowTrainer.cluster(featuresUnclustered) ;
 	cout << "Dico cree" << endl ;
 	//store the vocabulary
 	FileStorage fs("../dictionary.yml", FileStorage::WRITE);
 	fs << "vocabulary" << dictionary;
 	fs.release();
 
-	
+	cout << " Dictionnaire OK" << endl ;
 
 	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
 
     //prepare BOW descriptor extractor from the dictionary
-	Mat udictionary ;
-	dictionary.convertTo(udictionary,CV_8UC1);
+	//Mat udictionary ;
+	//dictionary.convertTo(udictionary,CV_8UC1);
     //Mat dictionary; 
     //FileStorage fs("../dictionary.yml", FileStorage::READ);
     //fs["vocabulary"] >> dictionary;
     //fs.release();    
     
     //create a nearest neighbor matcher
-	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce");
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
+		//= DescriptorMatcher::create("BruteForce");
 	//The SIFT feature extractor and descriptor
-	Ptr<FeatureDetector> detector2 = FeatureDetector::create("Dense");
-	Ptr<DescriptorExtractor> extractor2 = DescriptorExtractor::create("ORB");
+	Ptr<FeatureDetector> detector2 = FeatureDetector::create("SIFT") ; //("Dense")
+	Ptr<DescriptorExtractor> extractor2 = DescriptorExtractor::create("SIFT") ;  //("ORB");
 
+	cout << "init ok" << endl ;
     //create BoF (or BoW) descriptor extractor
     BOWImgDescriptorExtractor bowDE(extractor2,matcher);
     //Set the dictionary with the vocabulary we created in the first step
-    bowDE.setVocabulary(udictionary);
- 
+    bowDE.setVocabulary(dictionary);
+	cout << "Set voc ok" << endl ;
     //To store the image file name
     char * filename2 = new char[100];
     //To store the image tag name - only for save the descriptor in a file
