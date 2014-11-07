@@ -1,5 +1,5 @@
 #include "faceDetection.h"
-#include "bofSift.h"
+#include "featureDetection.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -19,11 +19,17 @@ int main(void
 	){
     //return detectFacesWebcam();
 	
+	cout << "Image a comparer" << endl ;
+	int i ;
+	cin >> i ;
+
 	buildSiftDictionary() ;
 	cout << "build OK" << endl ;
 
-	getSiftDescriptor() ;
+	Mat descriptor = getSiftDescriptor(i) ;
 	
+	cout << "Descriptor = " << descriptor << endl ;
+
 	return 0 ;
 
 }

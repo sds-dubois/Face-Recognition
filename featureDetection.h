@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 using namespace std;
+using namespace cv ;
 
 void buildSiftDictionary(void) ;
-void getSiftDescriptor(void) ;
+Mat getSiftDescriptor(int i) ;

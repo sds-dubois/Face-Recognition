@@ -1,4 +1,4 @@
-#include "bofSift.h"
+#include "featureDetection.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -33,7 +33,7 @@ void buildSiftDictionary(void){
 
 
 	//Images to extract feature descriptors and build the vocabulary
-	for(int f=0;f<2;f++){        
+	for(int f=0;f<10;f++){        
 		//create the file name of an image
 		sprintf(filename,"../dictionary/%i.jpg",f);
 		cout << filename << endl ;
@@ -41,8 +41,8 @@ void buildSiftDictionary(void){
 		//open the file
 		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale   
 		cout << input.cols << " " << input.rows << endl;
-		imshow("I",input);
-		waitKey() ;
+		//imshow("I",input);
+		//waitKey() ;
 		//detect feature points
 		detector->detect(input, keypoints);
 		cout << keypoints.size() << endl ;
@@ -53,7 +53,7 @@ void buildSiftDictionary(void){
 		featuresUnclustered.push_back(descriptor);        
 		//print the percentage
 		//cout << f/10 << " percent done\n" << endl ;
-		printf("%i percent done\n",f/10);
+		printf("%i percent done\n",f*10);
 	}    
 
 	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
@@ -82,7 +82,7 @@ void buildSiftDictionary(void){
 	cout << " Dictionnaire OK" << endl ;
 }
 
-void getSiftDescriptor(void) {
+Mat getSiftDescriptor(int i) {
 
 	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
 
@@ -117,7 +117,7 @@ void getSiftDescriptor(void) {
     FileStorage fs1("../descriptor.yml", FileStorage::WRITE);    
     
     //the image file with the location
-    sprintf(filename2,"../testimages/1.jpg");        
+	sprintf(filename2,"../testimages/%i.jpg",i);        
     //read the image
     Mat img=imread(filename2,CV_LOAD_IMAGE_GRAYSCALE);    
 	cout << img.cols << " x " << img.rows << endl ;
@@ -141,4 +141,6 @@ void getSiftDescriptor(void) {
     fs1.release();
 
 	cout << "C'est fini" << endl ;
+
+	return bowDescriptor ;
 }
