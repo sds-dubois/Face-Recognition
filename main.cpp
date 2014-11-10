@@ -34,7 +34,7 @@ int main(void
 	//Mat descriptor = getSiftDescriptor(i) ;
 	//cout << "Descriptor = " << descriptor << endl ;
 
-	createClassifier(i) ;
+	createSVMClassifier(i) ;
 
 	return 0 ;
 

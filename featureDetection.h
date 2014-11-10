@@ -13,4 +13,4 @@ using namespace cv ;
 
 void buildSiftDictionary(int i) ;
 Mat getSiftDescriptor(int i) ;
-void createClassifier(int n) ;
+void createSVMClassifier(int n) ;
