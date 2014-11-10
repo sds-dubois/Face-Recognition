@@ -178,6 +178,7 @@ void createClassifier(int n) {
 
 	Mat samples(0,dictionary.rows,CV_32FC1);
     Mat labels(0,1,CV_32FC1);
+	Mat img_with_sift ;
 
 	for(int f=0;f<4;f++){        //Barack Obama
 		//create the file name of an image
@@ -188,6 +189,9 @@ void createClassifier(int n) {
       
 		//Detect SIFT keypoints (or feature points)
 		detector->detect(input,keypoints);
+		drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+		imshow("Keypoints",img_with_sift) ;
+		waitKey() ;
 		//extract BoW (or BoF) descriptor from given image
 		bowDE.compute(input,keypoints,bowDescriptor);
 		samples.push_back(bowDescriptor) ;
@@ -202,6 +206,9 @@ void createClassifier(int n) {
       
 		//Detect SIFT keypoints (or feature points)
 		detector->detect(input,keypoints);
+		drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+		imshow("Keypoints",img_with_sift) ;
+		waitKey() ;
 		//extract BoW (or BoF) descriptor from given image
 		bowDE.compute(input,keypoints,bowDescriptor);
 		samples.push_back(bowDescriptor) ;
