@@ -146,7 +146,7 @@ Mat getSiftDescriptor(int i) {
 	return bowDescriptor ;
 }
 
-float createClassifier(int n) {
+void createClassifier(int n) {
 
     //prepare BOW descriptor extractor from the dictionary
     Mat dictionary; 
@@ -179,7 +179,7 @@ float createClassifier(int n) {
 	Mat samples(0,dictionary.rows,CV_32FC1);
     Mat labels(0,1,CV_32FC1);
 
-	for(int f=0;f<5;f++){        //Barack Obama
+	for(int f=0;f<4;f++){        //Barack Obama
 		//create the file name of an image
 		sprintf(filename,"../dictionary/%i.jpg",f);
 		cout << filename << endl ;
@@ -193,7 +193,7 @@ float createClassifier(int n) {
 		samples.push_back(bowDescriptor) ;
 	}
 
-	for(int f=5;f<10;f++){        //Hollande
+	for(int f=6;f<10;f++){        //Hollande
 		//create the file name of an image
 		sprintf(filename,"../dictionary/%i.jpg",f);
 		cout << filename << endl ;
@@ -208,9 +208,9 @@ float createClassifier(int n) {
 	}
 
 	Mat temp ;
-	temp = Mat::ones(5, 1, CV_32FC1) ;
+	temp = Mat::ones(4, 1, CV_32FC1) ;
 	labels.push_back(temp) ;
-	temp = Mat::zeros(5, 1, CV_32FC1) ;
+	temp = Mat::zeros(4, 1, CV_32FC1) ;
 	labels.push_back(temp) ;         
 	cout << "Images chargees et analysees" << endl ;
 	cout << samples.rows << " " << labels.rows << endl ;
@@ -221,7 +221,8 @@ float createClassifier(int n) {
 	CvSVM classifier;
 	CvSVMParams params;
     params.svm_type    = CvSVM::C_SVC;
-    params.kernel_type = CvSVM::LINEAR;
+	params.kernel_type = CvSVM::RBF;
+	params.degree = 3 ;
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	Mat samples_32f ;
 	samples.convertTo(samples_32f, CV_32F);
@@ -232,19 +233,17 @@ float createClassifier(int n) {
 		cout << "Samples n'a qu'une ligne !" << endl ;
 	
 	cout << "Classifieur cree" << endl ;
+	for(int k=0;k<10;k++){
+		sprintf(filename,"../dictionary/%i.jpg",k);
+		cout << "Test : " << filename << endl ;
+		//open the file
+		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+		//Detect SIFT keypoints (or feature points)
+		detector->detect(input,keypoints);
+		//extract BoW (or BoF) descriptor from given image
+		bowDE.compute(input,keypoints,bowDescriptor);
 
-	sprintf(filename,"../dictionary/%i.jpg",n);
-	cout << "Test : " << filename << endl ;
-	//open the file
-	input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
-	//Detect SIFT keypoints (or feature points)
-	detector->detect(input,keypoints);
-	//extract BoW (or BoF) descriptor from given image
-	bowDE.compute(input,keypoints,bowDescriptor);
-
-
-	float response = classifier.predict(bowDescriptor) ;
-	cout << response << endl ;
-
-	return response ;
+		float response = classifier.predict(bowDescriptor) ;
+		cout << response << endl ;
+	}
 }

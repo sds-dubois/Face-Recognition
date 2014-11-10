@@ -34,7 +34,7 @@ int main(void
 	//Mat descriptor = getSiftDescriptor(i) ;
 	//cout << "Descriptor = " << descriptor << endl ;
 
-	cout << "L'image demandee est : " << createClassifier(i) << endl ;;
+	createClassifier(i) ;
 
 	return 0 ;
 
