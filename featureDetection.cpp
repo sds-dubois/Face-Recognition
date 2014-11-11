@@ -35,7 +35,7 @@ void buildSiftDictionary(int i){
 
 	//Images to extract feature descriptors and build the vocabulary
 	//Hollande
-	for(int f=0;f<25;f++){        
+	for(int f=0;f<20;f++){        
 		//create the file name of an image
 		sprintf(filename,"../dictionary/Hollande/%i.jpg",f);
 		cout << filename << endl ;
@@ -59,7 +59,7 @@ void buildSiftDictionary(int i){
 	}    
 
 	//Obama
-	for(int f=0;f<25;f++){        
+	for(int f=0;f<20;f++){        
 		//create the file name of an image
 		sprintf(filename,"../dictionary/Obama/%i.jpg",f);
 		cout << filename << endl ;
@@ -253,8 +253,8 @@ void createSVMClassifier(int n) {
 	CvSVM classifier;
 	CvSVMParams params;
     params.svm_type    = CvSVM::C_SVC;
-	params.kernel_type = CvSVM::RBF;
-	params.degree = 2 ;
+	params.kernel_type = CvSVM::LINEAR;
+	//params.degree = 2 ;
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	Mat samples_32f ;
 	samples.convertTo(samples_32f, CV_32F);
