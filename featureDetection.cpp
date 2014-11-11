@@ -253,8 +253,10 @@ void createSVMClassifier(int n) {
 	CvSVM classifier;
 	CvSVMParams params;
     params.svm_type    = CvSVM::C_SVC;
-	params.kernel_type = CvSVM::LINEAR;
-	//params.degree = 2 ;
+	params.kernel_type = CvSVM::POLY;
+	params.degree = 3 ;
+	params.gamma =  5;
+	params.coef0 = 1 ;
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	Mat samples_32f ;
 	samples.convertTo(samples_32f, CV_32F);
