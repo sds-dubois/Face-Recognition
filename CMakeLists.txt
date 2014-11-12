@@ -7,5 +7,5 @@ PROJECT(Projet552)
 FIND_PACKAGE( Boost 1.40 COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-ADD_EXECUTABLE(facematching main.cpp faceDetection.h faceDetection.cpp)
+ADD_EXECUTABLE(facematching main.cpp faceDetection.h faceDetection.cpp featureDetection.h featureDetection.cpp)
 TARGET_LINK_LIBRARIES(facematching ${OpenCV_LIBS} ${Boost_LIBRARIES})
