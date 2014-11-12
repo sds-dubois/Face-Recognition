@@ -6,8 +6,11 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "boost/filesystem.hpp"
+
 using namespace std;
 using namespace cv;
+using namespace boost::filesystem;
 
 vector<Rect> detectAndDisplay(CascadeClassifier face_classifier, Mat frame )
 {
@@ -67,3 +70,6 @@ int detectFacesWebcam(){
     return 0;
 }
 
+int showFaces(){
+    return 0;
+}
