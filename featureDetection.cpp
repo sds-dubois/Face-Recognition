@@ -188,11 +188,10 @@ int createSVMClassifier(void) {
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
 
-		//classifier.insert(pair<int,CvSVM>(x,svm)) ;
-
 		sprintf(path,"../classifiers/classifier%i.yml",x);
 		cout << "Store : " << path << endl ;
 		classifier.save(path) ;
+		cout << "Stored" << endl ;
 	}
 	
 	
