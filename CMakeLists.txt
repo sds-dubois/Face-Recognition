@@ -4,6 +4,7 @@ FIND_PACKAGE(OpenCV REQUIRED)
 
 PROJECT(Projet552)
 
+set(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE( Boost 1.40 COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 

@@ -96,6 +96,8 @@ void buildSiftDictionary(int i){
 	//Create the BoW (or BoF) trainer
 	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
 	//cluster the feature vectors
+	//Mat feature ;
+	//featuresUnclustered.convertTo(feature,CV_32FC1);
 	Mat dictionary=bowTrainer.cluster(featuresUnclustered) ;
 	cout << "Dico cree" << endl ;
 	//store the vocabulary
