@@ -16,23 +16,25 @@ using namespace cv;
 
 
 int main(void){
-    return detectFacesWebcam();
+    //return detectFacesWebcam();
 
 	cout << "Dictionary size :" << endl ;
 	int j ;
 	cin >> j ;
 
+	/*
 	cout << "Image a classifier :" << endl ;
 	int i ;
 	cin >> i ;
-
+	*/
 	buildSiftDictionary(j) ;
 	cout << "build OK" << endl ;
 
 	//Mat descriptor = getSiftDescriptor(i) ;
 	//cout << "Descriptor = " << descriptor << endl ;
 
-	createSVMClassifier(i) ;
+	int k  = createSVMClassifier() ;
+	cout << k << " classieurs crees" << endl ;
 
 	return 0 ;
 }
