@@ -4,7 +4,9 @@ FIND_PACKAGE(OpenCV REQUIRED)
 
 PROJECT(Projet552)
 
-FIND_PACKAGE( Boost 1.40 COMPONENTS program_options system filesystem REQUIRED )
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_DEBUG_RUNTIME ON)
+FIND_PACKAGE( Boost COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 ADD_EXECUTABLE(facematching main.cpp faceDetection.h faceDetection.cpp featureDetection.h featureDetection.cpp)
