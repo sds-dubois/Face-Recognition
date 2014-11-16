@@ -22,22 +22,12 @@ int main(void){
 	/*
 	int j ;
 	cin >> j ;
-
-	/*
-	cout << "Image a classifier :" << endl ;
-	int i ;
-	cin >> i ;
+	buildSiftDictionary(j) ;
+	cout << "build OK" << endl ;
 	*/
-	//buildSiftDictionary(j) ;
-	//cout << "build OK" << endl ;
-
-	//Mat descriptor = getSiftDescriptor(i) ;
-	//cout << "Descriptor = " << descriptor << endl ;
 
 	//createSVMClassifier() ;
-	//cout << k << " classieurs crees" << endl ;
 
-	//loadSVMClassifier() ;
 	predict() ;
 
 	return 0 ;
