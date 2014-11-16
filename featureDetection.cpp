@@ -269,7 +269,7 @@ void predict(void){
 				if(input.size[0] > 0 && input.size[1] > 0){
 					detector->detect(input,keypoints);
 					bowDE.compute(input,keypoints,bowDescriptor);
-					float min = 2ais  ;
+					float min = 2  ;
 					int prediction =0 ;
 					for(int x=0;x<3;x++){
 						sprintf(chemin,"../classifiers/classifier%i.yml",x);
