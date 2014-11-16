@@ -269,12 +269,10 @@ void predict(void){
 				if(input.size[0] > 0 && input.size[1] > 0){
 					detector->detect(input,keypoints);
 					bowDE.compute(input,keypoints,bowDescriptor);
-					cout << bowDescriptor.size << endl << endl ;
 					for(int x=0;x<3;x++){
 						sprintf(chemin,"../classifiers/classifier%i.yml",x);
 						CvSVM my_svm ;
 						my_svm.load(chemin) ;
-						//cout << (*classifiers[x]).get_params().kernel_type << endl ; 
 						cout << my_svm.predict(bowDescriptor) ;
 					}
 				}

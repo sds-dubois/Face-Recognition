@@ -17,8 +17,9 @@ using namespace cv;
 
 int main(void){
     //return detectFacesWebcam();
+	
+	cout << "Dictionary size  = 5" << endl ;
 	/*
-	cout << "Dictionary size :" << endl ;
 	int j ;
 	cin >> j ;
 
