@@ -17,7 +17,7 @@ using namespace cv;
 
 int main(void){
     //return detectFacesWebcam();
-
+	/*
 	cout << "Dictionary size :" << endl ;
 	int j ;
 	cin >> j ;
@@ -27,14 +27,17 @@ int main(void){
 	int i ;
 	cin >> i ;
 	*/
-	buildSiftDictionary(j) ;
-	cout << "build OK" << endl ;
+	//buildSiftDictionary(j) ;
+	//cout << "build OK" << endl ;
 
 	//Mat descriptor = getSiftDescriptor(i) ;
 	//cout << "Descriptor = " << descriptor << endl ;
 
-	int k  = createSVMClassifier() ;
-	cout << k << " classieurs crees" << endl ;
+	//createSVMClassifier() ;
+	//cout << k << " classieurs crees" << endl ;
+
+	//loadSVMClassifier() ;
+	predict() ;
 
 	return 0 ;
 }

@@ -280,11 +280,8 @@ void createSVMClassifier(int n) {
 		//extract BoW (or BoF) descriptor from given image
 		bowDE.compute(input,keypoints,bowDescriptor);
 
-		float response = classifier.predict(bowDescriptor) ;
-		if(response != 1){
-			cout << response << endl ;
-			nbr_error_Obama ++ ;
-		}
+		float response = classifier.predict(bowDescriptor,true) ;
+		cout << response << " = " << classifier.predict(bowDescriptor) <<endl ;
 	}
 	
 	//Hollande
@@ -298,11 +295,8 @@ void createSVMClassifier(int n) {
 		//extract BoW (or BoF) descriptor from given image
 		bowDE.compute(input,keypoints,bowDescriptor);
 
-		float response = classifier.predict(bowDescriptor) ;
-		if(response != 0 ){
-			cout << response << endl ;
-			nbr_error_Hollande ++ ;
-		}
+		cout <<classifier.predict(bowDescriptor,true) << " = " << classifier.predict(bowDescriptor) <<endl ;
+
 	}
 
 	cout << "Erreurs Obama : " << nbr_error_Obama << ", Erreurs Hollande : " << nbr_error_Hollande << endl ;

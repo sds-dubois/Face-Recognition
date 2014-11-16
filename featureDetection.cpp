@@ -200,3 +200,87 @@ int createSVMClassifier(void) {
 	return index ;
 	
 }
+
+map<int,CvSVM*> loadSVMClassifier(void){
+	map<int,CvSVM*> classifiers ;
+	char * path = new char[15];
+	for (int x=0 ; x<3 ; x++){
+		sprintf(path,"../classifiers/classifier%i.yml",x);
+		CvSVM my_svm ;
+		my_svm.load(path) ;
+		classifiers.insert(pair<int,CvSVM*>(x,&my_svm)) ;
+		cout << "classifieur " << x << " bien charge" << endl ;
+		waitKey() ;
+	}
+
+	return classifiers ;
+}
+
+void predict(void){
+
+	string filename ;
+	//map<int,CvSVM*> classifiers = loadSVMClassifier() ;
+	/*
+	map<int,CvSVM*> classifiers ;
+	char * chemin = new char[15];
+	for (int x=0 ; x<3 ; x++){
+		sprintf(chemin,"../classifiers/classifier%i.yml",x);
+		CvSVM my_svm ;
+		my_svm.load(chemin) ;
+		classifiers.insert(pair<int,CvSVM*>(x,&my_svm)) ;
+		cout << "classifieur " << x << " bien charge" << endl ;
+		waitKey() ;
+	}
+	*/
+	waitKey();
+	cout << "Classifieurs charges" << endl ;
+	waitKey() ;
+
+	//prepare BOW descriptor extractor from the dictionary
+    Mat dictionary; 
+    FileStorage fs("../dictionary.yml", FileStorage::READ);
+    fs["vocabulary"] >> dictionary;
+    fs.release();    
+    cout << "dictionary loaded" << endl ;
+    //create a nearest neighbor matcher
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; 
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ;
+    //create BoF (or BoW) descriptor extractor
+    BOWImgDescriptorExtractor bowDE(extractor,matcher);
+    //Set the dictionary with the vocabulary we created in the first step
+    bowDE.setVocabulary(dictionary);
+	Mat input ;
+    vector<KeyPoint> keypoints;  
+    Mat bowDescriptor;   
+	char * chemin = new char[15];
+
+	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++) { //each folder in ../data
+		path p = it1->path() ;
+		cout << "Folder " << p.string() << endl ;
+		waitKey() ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder    
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+				filename = p2.string() ;
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+				if(input.size[0] > 0 && input.size[1] > 0){
+					detector->detect(input,keypoints);
+					bowDE.compute(input,keypoints,bowDescriptor);
+					cout << bowDescriptor.size << endl << endl ;
+					for(int x=0;x<3;x++){
+						sprintf(chemin,"../classifiers/classifier%i.yml",x);
+						CvSVM my_svm ;
+						my_svm.load(chemin) ;
+						//cout << (*classifiers[x]).get_params().kernel_type << endl ; 
+						cout << my_svm.predict(bowDescriptor) ;
+					}
+				}
+				cout << endl ;
+			}
+		}
+	}
+
+}

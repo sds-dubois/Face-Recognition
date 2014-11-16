@@ -15,3 +15,5 @@ using namespace cv ;
 void buildSiftDictionary(int i) ;
 //Mat getSiftDescriptor(int i) ;
 int createSVMClassifier(void) ;
+map<int,CvSVM*> loadSVMClassifier(void) ;
+void predict(void) ;
