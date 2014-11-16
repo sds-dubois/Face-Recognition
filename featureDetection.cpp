@@ -269,12 +269,20 @@ void predict(void){
 				if(input.size[0] > 0 && input.size[1] > 0){
 					detector->detect(input,keypoints);
 					bowDE.compute(input,keypoints,bowDescriptor);
+					float min = 2 ;
+					int prediction =0 ;
 					for(int x=0;x<3;x++){
 						sprintf(chemin,"../classifiers/classifier%i.yml",x);
 						CvSVM my_svm ;
 						my_svm.load(chemin) ;
-						cout << my_svm.predict(bowDescriptor) ;
+						if (my_svm.predict(bowDescriptor,true) < min){
+							prediction = x ;
+							min = my_svm.predict(bowDescriptor,true) ;
+						}
+						cout << my_svm.predict(bowDescriptor,true) << " " ;
 					}
+					cout <<endl ;
+					cout << "Classe retenue : " << prediction << endl ;
 				}
 				cout << endl ;
 			}
