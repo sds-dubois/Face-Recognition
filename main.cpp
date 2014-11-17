@@ -17,7 +17,7 @@ using namespace cv;
 
 int main(void){
     //return detectFacesWebcam();
-
+	
 	/*
 	int j ;
 	cin >> j ;
