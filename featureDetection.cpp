@@ -8,6 +8,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/ml/ml.hpp>
 #include <boost/filesystem.hpp>
+#include <vector>
 #include <iostream>
 #include <stdio.h>
 
@@ -121,7 +122,7 @@ int createSVMClassifier(void) {
 
 	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++) { //each folder in ../data
 		path p = it1->path() ;
-		celebrityName = p.string() ;
+		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
 		Mat samples(0,dictionary.rows,CV_32FC1) ;
 		counter = 0 ;
@@ -162,7 +163,7 @@ int createSVMClassifier(void) {
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	
 	Mat labels,temp ;
-	char * path = new char[15];
+	string fname ;
 
 	for (int x=0;x<index;x++){
 		Mat samples(0,dictionary.rows,CV_32FC1) ;
@@ -188,9 +189,9 @@ int createSVMClassifier(void) {
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
 
-		sprintf(path,"../classifiers/classifier%i.yml",x);
-		cout << "Store : " << path << endl ;
-		classifier.save(path) ;
+		fname = "../classifiers/" + names[x] + ".yml";
+		cout << "Store : " << fname << endl ;
+		classifier.save(fname.c_str()) ;
 		cout << "Stored" << endl ;
 	}
 	
@@ -201,6 +202,7 @@ int createSVMClassifier(void) {
 	
 }
 
+// Do NOT use that !
 map<int,CvSVM*> loadSVMClassifier(void){
 	map<int,CvSVM*> classifiers ;
 	char * path = new char[15];
@@ -217,22 +219,26 @@ map<int,CvSVM*> loadSVMClassifier(void){
 }
 
 void predict(void){
-
-	string filename ;
-	//map<int,CvSVM*> classifiers = loadSVMClassifier() ;
+	
 	/*
-	map<int,CvSVM*> classifiers ;
-	char * chemin = new char[15];
-	for (int x=0 ; x<3 ; x++){
-		sprintf(chemin,"../classifiers/classifier%i.yml",x);
-		CvSVM my_svm ;
-		my_svm.load(chemin) ;
-		classifiers.insert(pair<int,CvSVM*>(x,&my_svm)) ;
-		cout << "classifieur " << x << " bien charge" << endl ;
-		waitKey() ;
+	int count_folders = 0 ; //pour plus tard ...
+	for(directory_iterator it("../classifiers"); it != directory_iterator(); ++it){
+		count_folders ++ ;
 	}
 	*/
-	waitKey();
+	CvSVM classifiers[3] ;
+	String celebrities[3] ;
+	int index = 0 ;
+	for (directory_iterator it("../classifiers"); it != directory_iterator() ; it++) { 
+		path p = it->path() ;
+		if(is_regular_file(it->status())){
+			classifiers[index].load(p.string().c_str()) ;
+			celebrities[index] = p.stem().string() ;
+			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
+			index ++ ;
+		}
+	}
+
 	cout << "Classifieurs charges" << endl ;
 	waitKey() ;
 
@@ -254,7 +260,8 @@ void predict(void){
 	Mat input ;
     vector<KeyPoint> keypoints;  
     Mat bowDescriptor;   
-	char * chemin = new char[15];
+	string filename;
+
 
 	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++) { //each folder in ../data
 		path p = it1->path() ;
@@ -272,17 +279,14 @@ void predict(void){
 					float min = 2  ;
 					int prediction =0 ;
 					for(int x=0;x<3;x++){
-						sprintf(chemin,"../classifiers/classifier%i.yml",x);
-						CvSVM my_svm ;
-						my_svm.load(chemin) ;
-						if (my_svm.predict(bowDescriptor,true) < min){
+						if (classifiers[x].predict(bowDescriptor,true) < min){
 							prediction = x ;
-							min = my_svm.predict(bowDescriptor,true) ;
+							min = classifiers[x].predict(bowDescriptor,true) ;
 						}
-						cout << my_svm.predict(bowDescriptor,true) << " " ;
+						cout << classifiers[x].predict(bowDescriptor,true) << " " ;
 					}
 					cout <<endl ;
-					cout << "Classe retenue : " << prediction << endl ;
+					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
 				}
 				cout << endl ;
 			}
