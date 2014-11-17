@@ -1,4 +1,5 @@
 #include "featureDetection.h"
+#include "faceDetection.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -18,12 +19,12 @@ using namespace cv;
 using namespace boost::filesystem ;
 
 void buildSiftDictionary(int i){
-	//Step 1 - Obtain the set of bags of features.
+    CascadeClassifier face_classifier = getCascadeClassifier();
 	initModule_nonfree() ;
 	//to store the input file names
-	string filename ;       
+	string filename ;
 	//to store the current input image
-	Mat input;    
+	Mat input;
 
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypoints;
@@ -36,35 +37,33 @@ void buildSiftDictionary(int i){
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 
 	//Images to extract feature descriptors and build the vocabulary
-	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++) { //each folder in ../data
+	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		cout << "Folder " << p.string() << endl ;
-		waitKey() ;
-		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder    
-			//create the file name of an image
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
 			cout << it2->path() << endl ;
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
+                // Loading file
 				filename = p2.string() ;
-				//open the file
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale   
-				//cout << input.cols << " " << input.rows << endl;
-				//imshow("I",input);
-				//detect feature points
-				detector->detect(input, keypoints);
-				//cout << keypoints.size() << endl ;
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 
-				//compute the descriptors for each keypoint
-				extractor->compute(input, keypoints,descriptor); 
-				//put the all feature descriptors in a single Mat object 
-				featuresUnclustered.push_back(descriptor);        
+                // Generating mask for face on the image
+                vector<Rect> faces = detectFaces(face_classifier, input);
+                Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
+                mask(faces.front()) = 1;
+
+				//compute the descriptors for each keypoint and put it in a single Mat object
+				detector->detect(input, keypoints, mask);
+				extractor->compute(input, keypoints,descriptor);
+				featuresUnclustered.push_back(descriptor);
 			}
-		}    
+		}
 	}
 
-	
+
 	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
-	
+
 	//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=i;
@@ -112,29 +111,28 @@ int createSVMClassifier(void) {
     //init
 	string filename ;
     Mat input ;
-    vector<KeyPoint> keypoints;  
-    Mat bowDescriptor;   
+    vector<KeyPoint> keypoints;
+    Mat bowDescriptor;
 	map<int,Mat> training_set ;
 	map<int,string> names ;
 	int counter ;
 	int index = 0 ;
 	string celebrityName ;
 
-	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++) { //each folder in ../data
+	for (directory_iterator it1("../data"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
 		Mat samples(0,dictionary.rows,CV_32FC1) ;
 		counter = 0 ;
-		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder    
-			//create the file name of an image
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
-				filename = p2.string() ;
-				//create the file name of an image
-				cout << filename << endl ;
-				//open the file
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
+                // Load the image
+				filename = p2.string();
+				cout << filename << endl;
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+
 				if(input.size[0] > 0 && input.size[1] > 0){
 					counter ++ ;
 					//Detect SIFT keypoints (or feature points)

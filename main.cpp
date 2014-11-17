@@ -10,24 +10,27 @@
 #include <opencv2/ml/ml.hpp>
 #include <iostream>
 #include <stdio.h>
+#include <string>
 
 using namespace std;
 using namespace cv;
 
 
-int main(void){
-    //return detectFacesWebcam();
-	
-	/*
-	int j ;
-	cin >> j ;
+int main(int argc, char ** argv){
+    int j ;
+    if(argc > 1){
+        stringstream ss(argv[1]);
+        ss >> j;
+    }else{
+        cin >> j;
+    }
 	buildSiftDictionary(j) ;
 	cout << "build OK" << endl ;
-	*/
+
 
 	//createSVMClassifier() ;
 
-	predict() ;
+	//predict() ;
 
 	return 0 ;
 }
