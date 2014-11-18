@@ -14,7 +14,7 @@ using namespace boost::filesystem;
 
 CascadeClassifier getCascadeClassifier()
 {
-    String face_cascade_name = "haarcascade_frontalface_alt.xml";
+    String face_cascade_name = "../data/haarcascade_frontalface_alt.xml";
     CascadeClassifier face_cascade;
     face_cascade.load(face_cascade_name);
     return face_cascade;
@@ -33,7 +33,7 @@ vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame )
 }
 
 int detectFacesWebcam(){
-    String face_cascade_name = "haarcascade_frontalface_alt.xml";
+    String face_cascade_name = "../data/haarcascade_frontalface_alt.xml";
     CascadeClassifier face_cascade;
     string window_name = "Capture - Face detection";
 

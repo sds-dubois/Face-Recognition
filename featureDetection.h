@@ -12,7 +12,7 @@
 using namespace std;
 using namespace cv ;
 
-void buildSiftDictionary(int i) ;
+void buildSiftDictionary(int i,bool verbose) ;
 //Mat getSiftDescriptor(int i) ;
 int createSVMClassifier(void) ;
 map<int,CvSVM*> loadSVMClassifier(void) ;

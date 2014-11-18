@@ -18,19 +18,22 @@ using namespace cv;
 
 int main(int argc, char ** argv){
     int j ;
+	bool b ; //True if you want to see images and Sift detection while building the dictionary
     if(argc > 1){
         stringstream ss(argv[1]);
         ss >> j;
+		stringstream ss2(argv[1]);
+		ss2 >> b;
     }else{
         cin >> j;
+		cin >> b;
     }
-	buildSiftDictionary(j) ;
-	cout << "build OK" << endl ;
-
+	//buildSiftDictionary(j,b) ;
+	//cout << "build OK" << endl ;
 
 	//createSVMClassifier() ;
 
-	//predict() ;
+	predict() ;
 
 	return 0 ;
 }
