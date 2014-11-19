@@ -10,29 +10,30 @@
 #include <opencv2/ml/ml.hpp>
 #include <iostream>
 #include <stdio.h>
+#include <string>
 
 using namespace std;
 using namespace cv;
 
 
-int main(void){
-    //return detectFacesWebcam();
+int main(int argc, char ** argv){
+    int j ;
+	bool b ; //True if you want to see images and Sift detection while building the dictionary
+    if(argc > 1){
+        stringstream ss(argv[1]);
+        ss >> j;
+		stringstream ss2(argv[1]);
+		ss2 >> b;
+    }else{
+        cin >> j;
+		cin >> b;
+    }
+	//buildSiftDictionary(j,false) ;
+	//cout << "build OK" << endl ;
 
-	cout << "Dictionary size :" << endl ;
-	int j ;
-	cin >> j ;
+	//createSVMClassifier() ;
 
-	cout << "Image a classifier :" << endl ;
-	int i ;
-	cin >> i ;
-
-	buildSiftDictionary(j) ;
-	cout << "build OK" << endl ;
-
-	//Mat descriptor = getSiftDescriptor(i) ;
-	//cout << "Descriptor = " << descriptor << endl ;
-
-	createSVMClassifier(i) ;
+	predict() ;
 
 	return 0 ;
 }
