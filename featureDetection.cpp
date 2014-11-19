@@ -172,14 +172,10 @@ int createSVMClassifier(void) {
         
 	cout << "Images chargees et analysees" << endl ;
 
-	CvSVMParams params;
-    params.svm_type    = CvSVM::C_SVC;
-	params.kernel_type = CvSVM::POLY;
-	params.degree = 3 ;
-	params.gamma =  5;
-	params.coef0 = 1 ;
-    params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
-	
+	CvSVMParams params = chooseSVMParams() ;
+	vector<CvParamGrid> grids = chooseSVMGrids() ;
+	int k_fold = 2 ;
+
 	Mat labels,temp ;
 	string fname ;
 
@@ -202,7 +198,7 @@ int createSVMClassifier(void) {
 		Mat samples_32f ;
 		samples.convertTo(samples_32f, CV_32F);
 		if(samples.rows != 0){ 
-			classifier.train(samples_32f,labels,Mat(),Mat(),params);		
+			classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
 		}
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
@@ -218,6 +214,39 @@ int createSVMClassifier(void) {
 
 	return index ;
 	
+}
+
+CvSVMParams chooseSVMParams(void){
+	CvSVMParams params;
+    params.svm_type    = CvSVM::C_SVC;
+	params.kernel_type = CvSVM::POLY;
+	params.degree = 3 ;
+	params.gamma =  5;
+	params.coef0 = 1 ;
+    params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+
+	return params ;
+}
+
+vector<CvParamGrid> chooseSVMGrids(void){
+	/*
+	Ordre :
+	CvParamGrid Cgrid=CvSVM::get_default_grid(CvSVM::C)
+	CvParamGrid gammaGrid=CvSVM::get_default_grid(CvSVM::GAMMA)
+	CvParamGrid pGrid=CvSVM::get_default_grid(CvSVM::P)
+	CvParamGrid nuGrid=CvSVM::get_default_grid(CvSVM::NU)
+	CvParamGrid coeffGrid=CvSVM::get_default_grid(CvSVM::COEF)
+	CvParamGrid degreeGrid=CvSVM::get_default_grid(CvSVM::DEGREE)
+	*/
+	vector<CvParamGrid> grids ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::C)) ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::GAMMA)) ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::P)) ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::NU)) ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::COEF)) ;
+	grids.push_back(CvSVM::get_default_grid(CvSVM::DEGREE)) ;
+	
+	return grids ;
 }
 
 // Do NOT use that !
