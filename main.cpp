@@ -28,8 +28,8 @@ int main(int argc, char ** argv){
         cin >> j;
 		cin >> b;
     }
-	//buildSiftDictionary(j,b) ;
-	//cout << "build OK" << endl ;
+	buildSiftDictionary(j,false) ;
+	cout << "build OK" << endl ;
 
 	//createSVMClassifier() ;
 
