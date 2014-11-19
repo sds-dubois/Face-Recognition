@@ -1,6 +1,8 @@
 #include "featureDetection.h"
 #include "faceDetection.h"
 
+#define NUMBER_OF_CELEBRITIES 3
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -21,10 +23,6 @@ using namespace boost::filesystem ;
 void buildSiftDictionary(int i,bool verbose){
     CascadeClassifier face_classifier = getCascadeClassifier();
 	initModule_nonfree() ;
-	//to store the input file names
-	string filename ;
-	//to store the current input image
-	Mat input;
 
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypoints;
@@ -46,17 +44,17 @@ void buildSiftDictionary(int i,bool verbose){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
                 // Loading file
-				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				string filename = p2.string() ;
+				Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 				if(verbose){
 					imshow("img",input) ;
 					waitKey() ;
 				}
                 // Generating mask for face on the image
-                vector<Rect> faces = detectFaces(face_classifier, input); 
+                vector<Rect> faces = detectFaces(face_classifier, input);
 				if(faces.size() != 0){
-					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-					mask(faces.front()) = 1; 
+					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
+					mask(faces.front()) = 1;
 					//compute the descriptors for each keypoint and put it in a single Mat object
 					detector->detect(input, keypoints,mask);
 					if(verbose){
@@ -129,11 +127,10 @@ int createSVMClassifier(void) {
 	map<int,string> names ;
 	int counter ;
 	int index = 0 ;
-	string celebrityName ;
 
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
-		celebrityName = p.filename().string() ;
+		string celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
 		Mat samples(0,dictionary.rows,CV_32FC1) ;
 		counter = 0 ;
@@ -179,9 +176,8 @@ int createSVMClassifier(void) {
 	params.gamma =  5;
 	params.coef0 = 1 ;
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
-	
+
 	Mat labels,temp ;
-	string fname ;
 
 	for (int x=0;x<index;x++){
 		Mat samples(0,dictionary.rows,CV_32FC1) ;
@@ -201,30 +197,30 @@ int createSVMClassifier(void) {
 		CvSVM classifier ;
 		Mat samples_32f ;
 		samples.convertTo(samples_32f, CV_32F);
-		if(samples.rows != 0){ 
-			classifier.train(samples_32f,labels,Mat(),Mat(),params);		
+		if(samples.rows != 0){
+			classifier.train(samples_32f,labels,Mat(),Mat(),params);
 		}
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
 
-		fname = "../classifiers/" + names[x] + ".yml";
+		string fname = "../classifiers/" + names[x] + ".yml";
 		cout << "Store : " << fname << endl ;
 		classifier.save(fname.c_str()) ;
 		cout << "Stored" << endl ;
 	}
-	
-	
+
+
 	cout << "Classifieurs crees" << endl ;
 
 	return index ;
-	
+
 }
 
 // Do NOT use that !
 map<int,CvSVM*> loadSVMClassifier(void){
 	map<int,CvSVM*> classifiers ;
 	char * path = new char[15];
-	for (int x=0 ; x<3 ; x++){
+	for (int x=0 ; x<NUMBER_OF_CELEBRITIES ; x++){
 		sprintf(path,"../classifiers/classifier%i.yml",x);
 		CvSVM my_svm ;
 		my_svm.load(path) ;
@@ -245,10 +241,10 @@ void predict(void){
 	}
 	*/
 	CascadeClassifier face_classifier = getCascadeClassifier();
-	CvSVM classifiers[3] ;
-	String celebrities[3] ;
+	CvSVM classifiers[NUMBER_OF_CELEBRITIES] ;
+	String celebrities[NUMBER_OF_CELEBRITIES] ;
 	int index = 0 ;
-	for (directory_iterator it("../classifiers"); it != directory_iterator() ; it++) { 
+	for (directory_iterator it("../classifiers"); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
 			classifiers[index].load(p.string().c_str()) ;
@@ -259,120 +255,83 @@ void predict(void){
 	}
 
 	cout << "Classifieurs charges" << endl ;
-	waitKey() ;
 
 	//prepare BOW descriptor extractor from the dictionary
-    Mat dictionary; 
+    Mat dictionary;
     FileStorage fs("../data/dictionary.yml", FileStorage::READ);
     fs["vocabulary"] >> dictionary;
-    fs.release();    
+    fs.release();
     cout << "dictionary loaded" << endl ;
     //create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
 	//The SIFT feature extractor and descriptor
-	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; 
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ;
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ;
     //create BoF (or BoW) descriptor extractor
     BOWImgDescriptorExtractor bowDE(extractor,matcher);
     //Set the dictionary with the vocabulary we created in the first step
     bowDE.setVocabulary(dictionary);
-	Mat input ;
-    vector<KeyPoint> keypoints;  
-    Mat bowDescriptor;   
-	string filename;
+    vector<KeyPoint> keypoints;
+    Mat bowDescriptor;
 
-	for (directory_iterator it1("../data/unlabeled"); it1 != directory_iterator() ; it1++) { //each folder in ../data
-		path p = it1->path() ;
-		cout << "Folder " << p.string() << endl ;
-		waitKey() ;
-		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder    
-			cout << it2->path() << endl ;
-			path p2 = it2->path() ;
-			if(is_regular_file(it2->status())){
-				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
-				if(input.size[0] > 0 && input.size[1] > 0){
-					// Generating mask for face on the image
-				    vector<Rect> faces = detectFaces(face_classifier, input);
-					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
-					if(faces.size() == 0)
-						cout << "Aucun visage detecte" << endl ;
-					else{
-						if(faces.size() > 1 )
-							cout << "Note : more than one face detected" << endl ;
-						mask(faces.front()) = 1;
-						//Detect SIFT keypoints (or feature points)
-						detector->detect(input,keypoints,mask);
-						if(keypoints.size() >0){
-							bowDE.compute(input,keypoints,bowDescriptor);
-							float min = 2  ;
-							int prediction =0 ;
-							for(int x=0;x<3;x++){
-								if (classifiers[x].predict(bowDescriptor,true) < min){
-									prediction = x ;
-									min = classifiers[x].predict(bowDescriptor,true) ;
-								}
-								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
-							}
-							cout <<endl ;
-							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
-						}
-						else{
-							cout << "No keypoints found" << endl ;
-						}
-					}
-				}
-				cout << endl ;
-			}
-		}
-	}
+    string basePaths[] = {"../data/unlabeled", "../data/labeled"};
+    int tableClassification [NUMBER_OF_CELEBRITIES][NUMBER_OF_CELEBRITIES] = {{0,0,0},{0,0,0},{0,0,0}};
 
-
-
-	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++) { //each folder in ../data
-		path p = it1->path() ;
-		cout << "Folder " << p.string() << endl ;
-		waitKey() ;
-		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder    
-			cout << it2->path() << endl ;
-			path p2 = it2->path() ;
-			if(is_regular_file(it2->status())){
-				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
-				if(input.size[0] > 0 && input.size[1] > 0){
-					// Generating mask for face on the image
-				    vector<Rect> faces = detectFaces(face_classifier, input);
-					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
-					if(faces.size() == 0)
-						cout << "Aucun visage detecte" << endl ;
-					else{
-						if(faces.size() > 1 )
-							cout << "Note : more than one face detected" << endl ;
-						mask(faces.front()) = 1;
-						//Detect SIFT keypoints (or feature points)
-						detector->detect(input,keypoints,mask);
-						if(keypoints.size() >0){
-							bowDE.compute(input,keypoints,bowDescriptor);
-							float min = 2  ;
-							int prediction =0 ;
-							for(int x=0;x<3;x++){
-								if (classifiers[x].predict(bowDescriptor,true) < min){
-									prediction = x ;
-									min = classifiers[x].predict(bowDescriptor,true) ;
-								}
-								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
-							}
-							cout <<endl ;
-							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
-						}
-						else{
-							cout << "No keypoints found" << endl ;
-						}
-					}
-				}
-				cout << endl ;
-			}
-		}
-	}
-
+    for(int numPath=0;numPath<2;numPath++){
+        int i=0;
+        for (directory_iterator it1(basePaths[numPath]); it1 != directory_iterator() ; it1++) { //each folder in ../data
+            path p = it1->path() ;
+            cout << "Folder " << p.string() << endl;
+            for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){ //each file in the folder
+                cout << it2->path() << endl ;
+                path p2 = it2->path() ;
+                if(is_regular_file(it2->status())){
+                    string filename = p2.string() ;
+                    Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale
+                    if(input.size[0] > 0 && input.size[1] > 0){
+                        // Generating mask for face on the image
+                        vector<Rect> faces = detectFaces(face_classifier, input);
+                        Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
+                        if(faces.size() == 0)
+                            cout << "Aucun visage detecte" << endl ;
+                        else{
+                            if(faces.size() > 1 )
+                                cout << "Note : more than one face detected" << endl ;
+                            mask(faces.front()) = 1;
+                            //Detect SIFT keypoints (or feature points)
+                            detector->detect(input,keypoints,mask);
+                            if(keypoints.size() >0){
+                                bowDE.compute(input,keypoints,bowDescriptor);
+                                float min = 2  ;
+                                int prediction =0 ;
+                                for(int x=0;x<NUMBER_OF_CELEBRITIES;x++){
+                                    if (classifiers[x].predict(bowDescriptor,true) < min){
+                                        prediction = x ;
+                                        min = classifiers[x].predict(bowDescriptor,true) ;
+                                    }
+                                    cout << classifiers[x].predict(bowDescriptor,true) << " " ;
+                                }
+                                cout <<endl ;
+                                cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+                                if(prediction >=0 && prediction < NUMBER_OF_CELEBRITIES && i >=0 && i < NUMBER_OF_CELEBRITIES)
+                                    tableClassification[i][prediction] += 1;
+                            }
+                            else{
+                                cout << "No keypoints found" << endl ;
+                            }
+                        }
+                    }
+                    cout << endl ;
+                }
+            }
+            i=i+1;
+        }
+    }
+    for(int i=0;i<NUMBER_OF_CELEBRITIES;i++){
+        for(int j=0;j<NUMBER_OF_CELEBRITIES;j++){
+            cout << tableClassification[i][j];
+            cout << " ";
+        }
+        cout << endl;
+    }
 }

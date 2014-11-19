@@ -23,7 +23,11 @@ int main(int argc, char ** argv){
         stringstream ss(argv[1]);
         ss >> j;
 		stringstream ss2(argv[1]);
-		ss2 >> b;
+		string s;
+		ss2 >> s;
+		if(s == "-v"){
+            b = true;
+		}
     }else{
         cin >> j;
 		cin >> b;
