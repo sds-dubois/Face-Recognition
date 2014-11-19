@@ -31,9 +31,9 @@ int main(int argc, char ** argv){
 	//buildSiftDictionary(j,false) ;
 	//cout << "build OK" << endl ;
 
-	createSVMClassifier() ;
+	//createSVMClassifier() ;
 
-	//predict() ;
+	predict() ;
 
 	return 0 ;
 }

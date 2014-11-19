@@ -298,22 +298,28 @@ void predict(void){
 					if(faces.size() == 0)
 						cout << "Aucun visage detecte" << endl ;
 					else{
+						if(faces.size() > 1 )
+							cout << "Note : more than one face detected" << endl ;
 						mask(faces.front()) = 1;
 						//Detect SIFT keypoints (or feature points)
 						detector->detect(input,keypoints,mask);
-						bowDE.compute(input,keypoints,bowDescriptor);
-
-						float min = 2  ;
-						int prediction =0 ;
-						for(int x=0;x<3;x++){
-							if (classifiers[x].predict(bowDescriptor,true) < min){
-								prediction = x ;
-								min = classifiers[x].predict(bowDescriptor,true) ;
+						if(keypoints.size() >0){
+							bowDE.compute(input,keypoints,bowDescriptor);
+							float min = 2  ;
+							int prediction =0 ;
+							for(int x=0;x<3;x++){
+								if (classifiers[x].predict(bowDescriptor,true) < min){
+									prediction = x ;
+									min = classifiers[x].predict(bowDescriptor,true) ;
+								}
+								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
 							}
-							cout << classifiers[x].predict(bowDescriptor,true) << " " ;
+							cout <<endl ;
+							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
 						}
-					cout <<endl ;
-					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+						else{
+							cout << "No keypoints found" << endl ;
+						}
 					}
 				}
 				cout << endl ;
@@ -340,22 +346,28 @@ void predict(void){
 					if(faces.size() == 0)
 						cout << "Aucun visage detecte" << endl ;
 					else{
+						if(faces.size() > 1 )
+							cout << "Note : more than one face detected" << endl ;
 						mask(faces.front()) = 1;
 						//Detect SIFT keypoints (or feature points)
 						detector->detect(input,keypoints,mask);
-						bowDE.compute(input,keypoints,bowDescriptor);
-
-						float min = 2  ;
-						int prediction =0 ;
-						for(int x=0;x<3;x++){
-							if (classifiers[x].predict(bowDescriptor,true) < min){
-								prediction = x ;
-								min = classifiers[x].predict(bowDescriptor,true) ;
+						if(keypoints.size() >0){
+							bowDE.compute(input,keypoints,bowDescriptor);
+							float min = 2  ;
+							int prediction =0 ;
+							for(int x=0;x<3;x++){
+								if (classifiers[x].predict(bowDescriptor,true) < min){
+									prediction = x ;
+									min = classifiers[x].predict(bowDescriptor,true) ;
+								}
+								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
 							}
-							cout << classifiers[x].predict(bowDescriptor,true) << " " ;
+							cout <<endl ;
+							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
 						}
-					cout <<endl ;
-					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+						else{
+							cout << "No keypoints found" << endl ;
+						}
 					}
 				}
 				cout << endl ;
