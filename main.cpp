@@ -29,7 +29,7 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	showAllFaces() ;
+	showAllEyes() ;
 
 	//buildSiftDictionary(j,false) ;
 	//cout << "build OK" << endl ;

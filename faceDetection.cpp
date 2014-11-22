@@ -96,9 +96,94 @@ void showAllFaces(void){
 		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
-				// Loading file
 				showFaces(p2.string()) ;
 			}
 		}
 	}
+}
+
+void showAllEyes(void){
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+				showEyes(p2.string()) ;
+			}
+		}
+	}
+}
+
+CascadeClassifier getEyeLeftCascadeClassifier()
+{
+    String eye_cascade_name = "../lib/haarcascade_lefteye_2splits.xml";
+    CascadeClassifier eye_cascade;
+    eye_cascade.load(eye_cascade_name);
+    return eye_cascade;
+}
+
+CascadeClassifier getEyeRightCascadeClassifier()
+{
+    String eye_cascade_name = "../lib/haarcascade_righteye_2splits.xml";
+    CascadeClassifier eye_cascade;
+    eye_cascade.load(eye_cascade_name);
+    return eye_cascade;
+}
+
+CascadeClassifier getEyesCascadeClassifier()
+{
+    String eye_cascade_name = "../lib/haarcascade_eye_tree_eyeglasses.xml";
+    CascadeClassifier eye_cascade;
+    eye_cascade.load(eye_cascade_name);
+    return eye_cascade;
+}
+
+vector<Rect> detectEye(CascadeClassifier face_classifier, Mat frame )
+{
+    vector<Rect> eyes;
+    Mat frame_gray = frame.clone();
+    equalizeHist( frame_gray, frame_gray );
+
+    //-- Detect faces
+    face_classifier.detectMultiScale(frame_gray, eyes, 1.1, 3, 0,Size(30,30));
+
+    return eyes;
+}
+
+void showLeftRightEyes(string filename){
+	CascadeClassifier lefteye_classifier = getEyeLeftCascadeClassifier();	
+	CascadeClassifier righteye_classifier = getEyeRightCascadeClassifier();	
+	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+	
+	vector<Rect> lefteyes = detectEye(lefteye_classifier, input); 
+	vector<Rect> righteyes = detectEye(righteye_classifier, input); 
+	if(lefteyes.size() != 0){
+		cout << "Nombre d'oeils gauches : " << lefteyes.size() << endl ;
+		rectangle(input,lefteyes.front(),Scalar(0,255,0),1,8,0) ;
+	}
+	if(righteyes.size() != 0){
+		cout << "Nombre d'oeils droits : " << righteyes.size() << endl ;
+		rectangle(input,righteyes.front(),Scalar(0,0,255),1,8,0) ;
+	}
+	if(righteyes.size() == 0 && lefteyes.size() ==0)
+		cout << "Aucun oeils detecte" << endl ;
+	imshow("eyes",input) ;
+	waitKey() ;
+}
+
+void showEyes(string filename){
+	CascadeClassifier eye_classifier = getEyesCascadeClassifier();	
+	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+	
+	vector<Rect> eyes = detectEye(eye_classifier, input); 
+	if(eyes.size() != 0){
+		cout << "Nombre de paires d'oeils : " << eyes.size() << endl ;
+		for (int j=0;j<eyes.size();j++){
+			rectangle(input,eyes[j],Scalar(0,255,0),1,8,0) ;
+		}
+	}
+	else
+		cout << "Aucun oeils detecte" << endl ;
+	imshow("eyes",input) ;
+	waitKey() ;
 }

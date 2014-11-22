@@ -18,6 +18,88 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem ;
 
+void buildEyeDictionary(int i,bool verbose){
+    CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	initModule_nonfree() ;
+	//to store the input file names
+	string filename ;
+	//to store the current input image
+	Mat input;
+
+	//To store the keypoints that will be extracted by SIFT
+	vector<KeyPoint> keypoints;
+	//To store the SIFT descriptor of current image
+	Mat descriptor;
+	//To store all the descriptors that are extracted from all the images.
+	Mat featuresUnclustered;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
+	Mat img_with_sift; 
+
+	//Images to extract feature descriptors and build the vocabulary
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		cout << "Folder " << p.string() << endl ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+                // Loading file
+				filename = p2.string() ;
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				if(verbose){
+					imshow("img",input) ;
+					waitKey() ;
+				}
+                // Generating mask for face on the image
+                vector<Rect> faces = detectFaces(face_classifier, input); 
+				if(faces.size() != 0){
+					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+					mask(faces.front()) = 1; 
+					//compute the descriptors for each keypoint and put it in a single Mat object
+					detector->detect(input, keypoints,mask);
+					if(verbose){
+						drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+						imshow("Keypoints",img_with_sift) ;
+						waitKey() ;
+					}
+					extractor->compute(input, keypoints,descriptor);
+					featuresUnclustered.push_back(descriptor);
+				}
+				else
+					cout << "Aucun visage detecte" << endl ;
+			}
+		}
+	}
+
+
+	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
+
+	//Construct BOWKMeansTrainer
+	//the number of bags
+	int dictionarySize=i;
+	//define Term Criteria
+	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
+	//retries number
+	int retries=1;
+	//necessary flags
+	int flags=KMEANS_PP_CENTERS;
+	//Create the BoW (or BoF) trainer
+	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
+	//cluster the feature vectors
+	Mat dictionary=bowTrainer.cluster(featuresUnclustered) ;
+	cout << "Dico cree" << endl ;
+	//store the vocabulary
+	FileStorage fs("../data/dictionary.yml", FileStorage::WRITE);
+	fs << "vocabulary" << dictionary;
+	fs.release();
+
+	cout << " Dictionnaire OK" << endl ;
+	
+}
+
+
 void buildSiftDictionary(int i,bool verbose){
     CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	initModule_nonfree() ;

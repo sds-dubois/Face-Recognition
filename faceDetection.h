@@ -13,3 +13,7 @@ vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame);
 int detectFacesWebcam();
 void showFaces(string file);
 void showAllFaces(void);
+void showEyes(string filename);
+void showAllEyes(void) ;
+void showLeftRightEyes(string filename) ;
+void showEyes(string filename);
