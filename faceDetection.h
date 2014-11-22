@@ -9,7 +9,9 @@ using namespace std;
 using namespace cv;
 
 CascadeClassifier getFaceCascadeClassifier();
+CascadeClassifier getEyesCascadeClassifier(void);
 vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame);
+vector<Rect> detectEye(CascadeClassifier face_classifier, Mat frame ) ;
 int detectFacesWebcam();
 void showFaces(string file);
 void showAllFaces(void);

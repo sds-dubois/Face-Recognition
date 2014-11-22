@@ -29,7 +29,8 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	showAllEyes() ;
+	//buildEyeDictionary(10,false) ;
+	compareDescriptors("../data/labeled/barack_obama/2.jpg");
 
 	//buildSiftDictionary(j,false) ;
 	//cout << "build OK" << endl ;

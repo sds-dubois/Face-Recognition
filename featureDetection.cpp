@@ -19,7 +19,7 @@ using namespace cv;
 using namespace boost::filesystem ;
 
 void buildEyeDictionary(int i,bool verbose){
-    CascadeClassifier face_classifier = getFaceCascadeClassifier();
+    CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
 	initModule_nonfree() ;
 	//to store the input file names
 	string filename ;
@@ -53,10 +53,12 @@ void buildEyeDictionary(int i,bool verbose){
 					waitKey() ;
 				}
                 // Generating mask for face on the image
-                vector<Rect> faces = detectFaces(face_classifier, input); 
-				if(faces.size() != 0){
+                vector<Rect> eyes = detectEye(eyes_classifier, input); 
+				if(eyes.size() == 2){
 					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-					mask(faces.front()) = 1; 
+					for (int k=0;k<2;k++){
+						mask(eyes[k]) = 1; 
+					}
 					//compute the descriptors for each keypoint and put it in a single Mat object
 					detector->detect(input, keypoints,mask);
 					if(verbose){
@@ -68,7 +70,7 @@ void buildEyeDictionary(int i,bool verbose){
 					featuresUnclustered.push_back(descriptor);
 				}
 				else
-					cout << "Aucun visage detecte" << endl ;
+					cout << "nombre d'oeils detectes <> 2" << endl ;
 			}
 		}
 	}
@@ -99,6 +101,81 @@ void buildEyeDictionary(int i,bool verbose){
 	
 }
 
+void compareDescriptors(string f){
+
+    //prepare BOW descriptor extractor from the dictionary
+    Mat dictionary; 
+    FileStorage fs("../data/dictionary.yml", FileStorage::READ);
+    fs["vocabulary"] >> dictionary;
+    fs.release();    
+    cout << "dictionary loaded" << endl ;
+
+    //create a nearest neighbor matcher
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; //("Dense")
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ;  //("ORB");
+    //create BoF (or BoW) descriptor extractor
+    BOWImgDescriptorExtractor bowDE(extractor,matcher);
+    //Set the dictionary with the vocabulary we created in the first step
+    bowDE.setVocabulary(dictionary);
+	cout << "Set voc ok" << endl ;
+	
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+
+	Mat img_ref = imread(f,CV_LOAD_IMAGE_GRAYSCALE);
+    Mat input ;
+	String filename ;
+	Mat bowDescriptor;        
+	vector<KeyPoint> keypoints;
+	Mat descriptor_ref ;
+	vector<Rect> eyes_ref = detectEye(eyes_classifier, img_ref);
+	if(eyes_ref.size() == 2){
+		Mat mask = Mat::zeros(img_ref.size[0], img_ref.size[1], CV_8U); 
+		for (int k=0;k<2;k++){
+			mask(eyes_ref[k]) = 1; 
+		}
+		//compute the descriptors for each keypoint and put it in a single Mat object
+		detector->detect(img_ref,keypoints,mask);
+		cout << "Taille keypoints " << keypoints.size() << endl ;
+		bowDE.compute(img_ref, keypoints,descriptor_ref);
+		cout << "Taille : " << descriptor_ref.size() << endl ;
+	}
+	else{
+		cout << "Error " << endl ;
+	}
+
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		cout << "Folder " << p.string() << endl ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+                // Loading file
+				filename = p2.string() ;
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+                // Generating mask for face on the image
+                vector<Rect> eyes = detectEye(eyes_classifier, input); 
+				if(eyes.size() == 2){
+					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+					for (int k=0;k<2;k++){
+						mask(eyes[k]) = 1; 
+					}
+					//compute the descriptors for each keypoint and put it in a single Mat object
+					detector->detect(input, keypoints,mask);
+					bowDE.compute(input, keypoints,bowDescriptor);
+					cout << 100* norm(descriptor_ref-bowDescriptor) << endl ; ;
+				}
+				else
+					cout << "nombre d'oeils detectes <> 2" << endl ;
+			}
+		}
+	}
+
+
+	cout << "C'est fini" << endl ;
+}
 
 void buildSiftDictionary(int i,bool verbose){
     CascadeClassifier face_classifier = getFaceCascadeClassifier();

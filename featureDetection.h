@@ -13,6 +13,8 @@ using namespace std;
 using namespace cv ;
 
 void buildSiftDictionary(int i,bool verbose) ;
+void buildEyeDictionary(int i,bool verbose) ;
+void compareDescriptors(string filename) ;
 CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 int createSVMClassifier(void) ;
