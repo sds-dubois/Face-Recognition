@@ -12,9 +12,9 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
-CascadeClassifier getCascadeClassifier()
+CascadeClassifier getFaceCascadeClassifier()
 {
-    String face_cascade_name = "../data/haarcascade_frontalface_alt.xml";
+    String face_cascade_name = "../lib/haarcascade_frontalface_alt.xml";
     CascadeClassifier face_cascade;
     face_cascade.load(face_cascade_name);
     return face_cascade;
@@ -33,7 +33,7 @@ vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame )
 }
 
 int detectFacesWebcam(){
-    String face_cascade_name = "../data/haarcascade_frontalface_alt.xml";
+    String face_cascade_name = "../lib/haarcascade_frontalface_alt.xml";
     CascadeClassifier face_cascade;
     string window_name = "Capture - Face detection";
 
@@ -76,7 +76,29 @@ int detectFacesWebcam(){
     return 0;
 }
 
-int showFaces(){
-    return 0;
+void showFaces(string file){
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();	
+	Mat input = imread(file, CV_LOAD_IMAGE_GRAYSCALE);
+	
+	vector<Rect> faces = detectFaces(face_classifier, input); 
+	if(faces.size() != 0){
+		rectangle(input,faces.front(),Scalar(0,0,255),1,8,0) ;
+		imshow("face",input) ;
+		waitKey() ;
+	}
+	else
+		cout << "Aucun visage detecte" << endl ;
 }
 
+void showAllFaces(void){
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+				// Loading file
+				showFaces(p2.string()) ;
+			}
+		}
+	}
+}

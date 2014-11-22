@@ -25,15 +25,18 @@ int main(int argc, char ** argv){
 		stringstream ss2(argv[1]);
 		ss2 >> b;
     }else{
-        cin >> j;
+/*
+		cin >> j;
 		cin >> b;
-    }
+*/    }
+	showAllFaces() ;
+
 	//buildSiftDictionary(j,false) ;
 	//cout << "build OK" << endl ;
 
 	//createSVMClassifier() ;
 
-	predict() ;
+	//predict() ;
 
 	return 0 ;
 }

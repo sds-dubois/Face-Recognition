@@ -19,7 +19,7 @@ using namespace cv;
 using namespace boost::filesystem ;
 
 void buildSiftDictionary(int i,bool verbose){
-    CascadeClassifier face_classifier = getCascadeClassifier();
+    CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	initModule_nonfree() ;
 	//to store the input file names
 	string filename ;
@@ -101,7 +101,7 @@ void buildSiftDictionary(int i,bool verbose){
 
 
 int createSVMClassifier(void) {
-	CascadeClassifier face_classifier = getCascadeClassifier();
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
     //prepare BOW descriptor extractor from the dictionary
     Mat dictionary; 
     FileStorage fs("../data/dictionary.yml", FileStorage::READ);
@@ -273,7 +273,7 @@ void predict(void){
 		count_folders ++ ;
 	}
 	*/
-	CascadeClassifier face_classifier = getCascadeClassifier();
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	CvSVM classifiers[3] ;
 	String celebrities[3] ;
 	int index = 0 ;

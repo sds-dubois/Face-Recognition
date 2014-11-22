@@ -8,7 +8,8 @@
 using namespace std;
 using namespace cv;
 
-CascadeClassifier getCascadeClassifier();
+CascadeClassifier getFaceCascadeClassifier();
 vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame);
 int detectFacesWebcam();
-int showFaces();
+void showFaces(string file);
+void showAllFaces(void);
