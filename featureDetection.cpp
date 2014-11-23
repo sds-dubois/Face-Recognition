@@ -102,7 +102,6 @@ void buildEyeDictionary(int i,bool verbose){
 }
 
 void compareDescriptors(string f){
-
     //prepare BOW descriptor extractor from the dictionary
     Mat dictionary; 
     FileStorage fs("../data/dictionary.yml", FileStorage::READ);
@@ -165,7 +164,13 @@ void compareDescriptors(string f){
 					//compute the descriptors for each keypoint and put it in a single Mat object
 					detector->detect(input, keypoints,mask);
 					bowDE.compute(input, keypoints,bowDescriptor);
-					cout << 100* norm(descriptor_ref-bowDescriptor) << endl ; ;
+					Mat diff = descriptor_ref-bowDescriptor ;
+					//cout << diff << endl ;
+					float pdt_scal = 0 ;
+					for(int k=0;k<5;k++){
+						pdt_scal += diff.at<float>(0,k) ;
+					}
+					cout << pdt_scal << endl << endl ;
 				}
 				else
 					cout << "nombre d'oeils detectes <> 2" << endl ;
