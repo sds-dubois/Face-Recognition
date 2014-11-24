@@ -30,7 +30,7 @@ void buildEyeDictionary(int i,bool verbose){
 
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypoints;
-	vector<KeyPoint> keypoints_best;
+	//vector<KeyPoint> keypoints_best;
 	//To store the SIFT descriptor of current image
 	Mat descriptor;
 	//To store all the descriptors that are extracted from all the images.
@@ -39,6 +39,30 @@ void buildEyeDictionary(int i,bool verbose){
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 	Mat img_with_sift;
+
+	Mat img_ref = imread("../data/labeled/barack_obama/2.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+	Mat descriptor_ref ;
+	vector<Rect> eyes_ref = detectEye(eyes_classifier, img_ref);
+	if(eyes_ref.size() == 2){
+		Mat mask = Mat::zeros(img_ref.size[0], img_ref.size[1], CV_8U); 
+		for (int k=0;k<2;k++){
+			mask(eyes_ref[k]) = 1; 
+		}
+		detector->detect(img_ref,keypoints,mask);
+		vector<KeyPoint> keypoints_best ;
+		int s = keypoints.size() ;
+		cout << s << endl ;
+		sort(keypoints.begin(),keypoints.end(),waytosort);
+		for(int t = 0; t <s && t<10; t++){
+				keypoints_best.push_back(keypoints[t]) ;
+		}
+		cout << "Taille keypoints " << keypoints_best.size() << " / " << s<< endl ;
+		extractor->compute(img_ref, keypoints_best,descriptor_ref);
+		cout << "Taille : " << descriptor_ref.size() << endl ;
+	}
+	else{
+		cout << "Error " << endl ;
+	}
 
 	//Images to extract feature descriptors and build the vocabulary
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
@@ -63,7 +87,7 @@ void buildEyeDictionary(int i,bool verbose){
 					//compute the descriptors for each keypoint and put it in a single Mat object
 					detector->detect(input, keypoints,mask);
 					int count = 0 ;
-					keypoints_best.clear();
+					vector<KeyPoint> keypoints_best ;
 					int s = keypoints.size() ;
 					sort(keypoints.begin(),keypoints.end(),waytosort);
 					for(int t = 0; t <s ; t++){
@@ -74,7 +98,7 @@ void buildEyeDictionary(int i,bool verbose){
 						count ++ ;
 					}
 					if(verbose)
-						cout << "nbr keypoints : " << count << endl ;
+						cout << "nbr keypoints : " << count << " - " << keypoints_best.size() << " - " << s << endl ;
 					if(verbose){
 						drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
 						imshow("Best Keypoints",img_with_sift) ;
@@ -83,6 +107,8 @@ void buildEyeDictionary(int i,bool verbose){
 						waitKey() ;
 					}
 					extractor->compute(input, keypoints_best,descriptor);
+					float diff = norm(descriptor-descriptor_ref);
+					cout << "Distance : " << diff << endl << endl ;
 					featuresUnclustered.push_back(descriptor);
 				}
 				else
@@ -135,7 +161,6 @@ void compareDescriptors(string f){
     //Set the dictionary with the vocabulary we created in the first step
     bowDE.setVocabulary(dictionary);
 	cout << "Set voc ok" << endl ;
-	vector<KeyPoint> keypoints_best ;
 	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
 
 	Mat img_ref = imread(f,CV_LOAD_IMAGE_GRAYSCALE);
@@ -150,14 +175,14 @@ void compareDescriptors(string f){
 		for (int k=0;k<2;k++){
 			mask(eyes_ref[k]) = 1; 
 		}
-		keypoints_best.clear();
+		detector->detect(img_ref,keypoints,mask);
+		vector<KeyPoint> keypoints_best ;
 		int s = keypoints.size() ;
 		sort(keypoints.begin(),keypoints.end(),waytosort);
 		for(int t = 0; t <s && t<10; t++){
 			keypoints_best.push_back(keypoints[t]) ;
 		}
 		//compute the descriptors for each keypoint and put it in a single Mat object
-		detector->detect(img_ref,keypoints_best,mask);
 		cout << "Taille keypoints " << keypoints_best.size() << endl ;
 		bowDE.compute(img_ref, keypoints_best,descriptor_ref);
 		cout << "Taille : " << descriptor_ref.size() << endl ;
@@ -183,14 +208,14 @@ void compareDescriptors(string f){
 					for (int k=0;k<2;k++){
 						mask(eyes[k]) = 1; 
 					}
-					keypoints_best.clear();
+					detector->detect(input, keypoints,mask);
+					vector<KeyPoint> keypoints_best ;
 					int s = keypoints.size() ;
 					sort(keypoints.begin(),keypoints.end(),waytosort);
 					for(int t = 0; t <s && t<10; t++){
 						keypoints_best.push_back(keypoints[t]) ;
 					}
 					//compute the descriptors for each keypoint and put it in a single Mat object
-					detector->detect(input, keypoints_best,mask);
 					bowDE.compute(input, keypoints_best,bowDescriptor);
 					Mat diff = descriptor_ref-bowDescriptor ;
 					//cout << diff << endl ;
