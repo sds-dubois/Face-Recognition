@@ -82,7 +82,7 @@ void buildEyeDictionary(int i,bool verbose){
 					for (int k=0;k<2;k++){
 						mask(eyes[k]) = 1;
 						if(verbose)
-							rectangle(input,eyes[k],Scalar(0,255,0),1,8,0) ;
+							rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
 					}
 					//compute the descriptors for each keypoint and put it in a single Mat object
 					detector->detect(input, keypoints,mask);
@@ -90,19 +90,25 @@ void buildEyeDictionary(int i,bool verbose){
 					vector<KeyPoint> keypoints_best ;
 					int s = keypoints.size() ;
 					sort(keypoints.begin(),keypoints.end(),waytosort);
-					for(int t = 0; t <s ; t++){
-						if(verbose)
-							cout << keypoints[t].response << " - " << t  << endl ;
-						if(count<10)
-							keypoints_best.push_back(keypoints[t]) ;
+					for(int t = 0; t <s && t < 10; t++){
+						keypoints_best.push_back(keypoints[t]) ;
 						count ++ ;
+						if(verbose){
+							cout << keypoints[t].response << " - " << t  << endl ;
+							drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+							imshow("Best Keypoints",img_with_sift) ;
+							waitKey() ;
+						}
 					}
 					if(verbose)
 						cout << "nbr keypoints : " << count << " - " << keypoints_best.size() << " - " << s << endl ;
 					if(verbose){
-						drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
-						imshow("Best Keypoints",img_with_sift) ;
+						//drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+						//imshow("Best Keypoints",img_with_sift) ;
 						drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+						for (int k=0;k<2;k++){
+							rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
+						}
 						imshow("Keypoints",img_with_sift) ;
 						waitKey() ;
 					}
