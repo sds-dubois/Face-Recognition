@@ -20,8 +20,7 @@ using namespace boost::filesystem ;
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 
-vector<KeyPoint> getSiftOnEyes1(string filename,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
-	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
     // Generating mask for face on the image
@@ -69,8 +68,7 @@ vector<KeyPoint> getSiftOnEyes1(string filename,CascadeClassifier eyes_classifie
 	return keypoints_best ;
 }
 
-vector<KeyPoint> getSiftOnEyes2(string filename,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
-	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
     // Generating mask for face on the image
@@ -103,9 +101,9 @@ vector<KeyPoint> getSiftOnEyes2(string filename,CascadeClassifier eyes_classifie
 			keypoints_best.push_back(KeyPoint(eyes[k].x+0.5*eyes[k].size().width,eyes[k].y+0.5*eyes[k].size().height,0.5*(eyes[k].size().width+eyes[k].size().height),alpha));
 		}
 		drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-		imshow("Best Keypoints",img_with_sift) ;
-		waitKey() ;
 		if(verbose){
+            imshow("Best Keypoints",img_with_sift) ;
+            waitKey() ;
 			drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
 			for (int k=0;k<2;k++){
 				rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
@@ -123,10 +121,6 @@ vector<KeyPoint> getSiftOnEyes2(string filename,CascadeClassifier eyes_classifie
 void buildEyeDictionary(int i,bool verbose){
     CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
 	initModule_nonfree() ;
-	//to store the input file names
-	string filename ;
-	//to store the current input image
-	Mat input;
 
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypoints;
@@ -140,31 +134,6 @@ void buildEyeDictionary(int i,bool verbose){
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 	Mat img_with_sift;
 
-	/*
-	Mat img_ref = imread("../data/labeled/barack_obama/2.jpg",CV_LOAD_IMAGE_GRAYSCALE);
-	Mat descriptor_ref ;
-	vector<Rect> eyes_ref = detectEye(eyes_classifier, img_ref);
-	if(eyes_ref.size() == 2){
-		Mat mask = Mat::zeros(img_ref.size[0], img_ref.size[1], CV_8U); 
-		for (int k=0;k<2;k++){
-			mask(eyes_ref[k]) = 1; 
-		}
-		detector->detect(img_ref,keypoints,mask);
-		vector<KeyPoint> keypoints_best ;
-		int s = keypoints.size() ;
-		cout << s << endl ;
-		sort(keypoints.begin(),keypoints.end(),waytosort);
-		for(int t = 0; t <s && t<10; t++){
-				keypoints_best.push_back(keypoints[t]) ;
-		}
-		cout << "Taille keypoints " << keypoints_best.size() << " / " << s<< endl ;
-		extractor->compute(img_ref, keypoints_best,descriptor_ref);
-		cout << "Taille : " << descriptor_ref.size() << endl ;
-	}
-	else{
-		cout << "Error " << endl ;
-	}
-	*/
 	//Images to extract feature descriptors and build the vocabulary
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
@@ -174,16 +143,12 @@ void buildEyeDictionary(int i,bool verbose){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
                 // Loading file
-				getSiftOnEyes2(p2.string(),eyes_classifier,detector,verbose) ;
-					/*
-					if keypoints <> 0
-					extractor->compute(input, keypoints_best,descriptor);
-					float diff = norm(descriptor-descriptor_ref);
-					cout << "Distance : " << diff << endl << endl ;
-					featuresUnclustered.push_back(descriptor); 
-					else
-					cout << "nombre d'oeils detectes <> 2" << endl ;
-					*/
+                Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
+				vector<KeyPoint> keypoints_best = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
+				if(keypoints_best.size() != 0){
+                    extractor->compute(input, keypoints_best,descriptor);
+					featuresUnclustered.push_back(descriptor);
+				}
 			}
 		}
 	}
@@ -235,9 +200,7 @@ void compareDescriptors(string f){
 	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
 
 	Mat img_ref = imread(f,CV_LOAD_IMAGE_GRAYSCALE);
-    Mat input ;
-	String filename ;
-	Mat bowDescriptor;        
+	Mat bowDescriptor;
 	vector<KeyPoint> keypoints;
 	Mat descriptor_ref ;
 	vector<Rect> eyes_ref = detectEye(eyes_classifier, img_ref);
@@ -270,8 +233,8 @@ void compareDescriptors(string f){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
                 // Loading file
-				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				string filename = p2.string() ;
+				Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
                 // Generating mask for face on the image
                 vector<Rect> eyes = detectEye(eyes_classifier, input); 
 				if(eyes.size() == 2){
