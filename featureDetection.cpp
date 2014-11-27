@@ -9,6 +9,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/ml/ml.hpp>
 #include <boost/filesystem.hpp>
+#include <math.h>
 #include <vector>
 #include <iostream>
 #include <stdio.h>
@@ -82,29 +83,15 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<
 				cout << eyes[k].size() << endl ;
 			}
 		}
-		//compute the descriptors for each keypoint and put it in a single Mat object
-		vector<KeyPoint> keypoints ;
-		detector->detect(input, keypoints,mask);
-		sort(keypoints.begin(),keypoints.end(),waytosort);
-		int s = keypoints.size() ;
-		sort(keypoints.begin(),keypoints.end(),waytosort);
-		float alpha = 0 ;
-		for(int t = 0; t <s && t < 10; t++){
-			alpha += keypoints[t].angle ;
-			if(verbose)
-				cout << "Angle " << t << " " <<  keypoints[t].angle << endl ; 
-		} 
-		alpha = alpha/min(s,10) ;
+		Point_<float> c1 = Point_<float>(eyes[0].x+0.5*eyes[0].size().width,eyes[0].y+0.5*eyes[0].size().height);
+		Point_<float> c2 = Point_<float>(eyes[1].x+0.5*eyes[1].size().width,eyes[1].y+0.5*eyes[1].size().height);
+		float alpha = (atan((c1.y-c2.y)/(c1.x-c2.x)))*180/3 ;
 		if(verbose)
-			cout << "Angle retenu : " << alpha << endl ;
-		for (int k=0;k<2;k++){
-			keypoints_best.push_back(KeyPoint(eyes[k].x+0.5*eyes[k].size().width,eyes[k].y+0.5*eyes[k].size().height,0.5*(eyes[k].size().width+eyes[k].size().height),alpha));
-		}
-		drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+			cout << "Alpha = " << alpha << endl ;
+		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(eyes[0].size().width+eyes[0].size().height),alpha));
+		keypoints_best.push_back(KeyPoint(c2.x,c2.y,0.5*(eyes[1].size().width+eyes[1].size().height),alpha));		
 		if(verbose){
-            imshow("Best Keypoints",img_with_sift) ;
-            waitKey() ;
-			drawKeypoints(input,keypoints,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+			drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
 			for (int k=0;k<2;k++){
 				rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
 			}
