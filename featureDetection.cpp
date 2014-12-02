@@ -20,6 +20,7 @@ using namespace cv;
 using namespace boost::filesystem ;
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
+const bool pca=true;
 
 vector<KeyPoint> getSiftOnMouth(Mat input,CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,bool verbose){
 	Mat img_with_sift ;
@@ -143,12 +144,14 @@ void buildEyeDictionary(int i,bool verbose){
 	Mat descriptor;
 	//To store all the descriptors that are extracted from all the images.
 	Mat featuresUnclustered;
+	vector<int> classesUnclustered;
 	//The SIFT feature extractor and descriptor
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 	Mat img_with_sift;
 
 	//Images to extract feature descriptors and build the vocabulary
+	int classPolitician=0;
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		cout << "Folder " << p.string() << endl ;
@@ -163,13 +166,78 @@ void buildEyeDictionary(int i,bool verbose){
 				if(keypoints_eyes.size() != 0){
                     extractor->compute(input, keypoints_eyes,descriptor);
 					featuresUnclustered.push_back(descriptor);
+					for(int i=0;i<descriptor.rows;i++)
+                        classesUnclustered.push_back(classPolitician);
 				}
 			}
 		}
+		classPolitician++;
 	}
 
 
 	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
+	cout << "classes : " << classesUnclustered.size() << endl;
+
+	if(pca){
+        int num_components = 10;
+        PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
+        Mat mean = principalCA.mean.clone();
+        Mat eigenvectors = principalCA.eigenvectors.clone();
+
+        for(int j=0;j<num_components/2;j++){
+            Mat x_vector = eigenvectors.row(j);
+            Mat y_vector = eigenvectors.row(j+1);
+
+            float x_max,y_max,x_min, y_min;
+            bool init=true;
+
+            int width = 400;
+            int height = 1200;
+            Mat planePCA = Mat::zeros(width, height, CV_8UC3);
+            for(int i=0;i<featuresUnclustered.rows;i++){
+                Mat feature_i = featuresUnclustered.row(i);
+                int x = feature_i.dot(x_vector);
+                int y = feature_i.dot(y_vector);
+
+                if(init){
+                    x_max = x;
+                    x_min = x;
+                    y_min = y;
+                    y_max = y;
+                    init=false;
+                }
+
+                if(x > x_max)
+                    x_max = x;
+                if(x<x_min)
+                    x_min = x;
+                if(y < y_min)
+                    y_min = y;
+                if(y > y_max)
+                    y_max = y;
+            }
+            float delta = y_max - y_min;
+            y_max += delta/5;
+            y_min -= delta/5;
+            delta = x_max-x_min;
+            x_max += delta/5;
+            x_min -= delta/5;
+            for(int i=0;i<featuresUnclustered.rows;i++){
+                Mat feature_i = featuresUnclustered.row(i);
+                int x = feature_i.dot(x_vector);
+                int y = feature_i.dot(y_vector);
+                Scalar color(255, 0, 0);
+                if(classesUnclustered.at(i) == 1)
+                    color = Scalar(0, 255, 0);
+                else if(classesUnclustered.at(i) == 2)
+                    color = Scalar(0, 0, 255);
+                circle(planePCA, Point((int)height*(x-x_min)/(x_max-x_min), (int)width*(y-y_min)/(y_max-y_min)), 5, color);
+
+            }
+            imshow("PCA", planePCA);
+            waitKey();
+        }
+	}
 
 	//Construct BOWKMeansTrainer
 	//the number of bags
