@@ -57,6 +57,41 @@ vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mo
 	return keypoints_best ;
 }
 
+vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nose_classifier,Ptr<FeatureDetector> detector,bool verbose){
+	Mat img_with_sift ;
+	Mat reframedImg = input(searchZone);
+	vector<KeyPoint> keypoints_best ;
+    // Generating mask for face on the image
+	vector<Rect> noses = detectMouth(nose_classifier, reframedImg); 
+	if(noses.size() ==0){
+		cout << "Erreur : aucun nez trouve" << endl ;
+	}
+	else{
+		if(noses.size() >1)
+			cout << "Attention : plus d'un nez trouve" << endl ;
+		Rect nose = noses[0] ;
+		nose.x += searchZone.x ;
+		nose.y += searchZone.y ;
+		Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+		mask(nose) = 1;
+		if(verbose)
+			rectangle(img_with_sift,nose,Scalar(0,255,0),1,8,0) ;
+		//compute the descriptors for each keypoint and put it in a single Mat object
+		Point_<float> c1 = Point_<float>(nose.x+0.5*nose.size().width,nose.y+0.5*nose.size().height);
+		float alpha = 0 ;
+		if(verbose)
+			cout << "Alpha = " << alpha << endl ;
+		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(nose.size().width+nose.size().height),alpha));
+		if(verbose){
+			drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+			rectangle(img_with_sift,nose,Scalar(0,255,0),1,8,0) ;
+			imshow("Keypoints",img_with_sift) ;
+			waitKey() ;
+		}
+	}
+	return keypoints_best ;
+}
+
 vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
@@ -171,20 +206,23 @@ void buildEyeDictionary(int i,bool verbose){
                 Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
 				vector<Rect> faces = detectFaces(face_classifier, input); 
 				Rect searchZone ;
-				vector<KeyPoint> keypoints_mouth ; 
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
-					searchZone.height /= 2 ;
-					searchZone.y += searchZone.height ;
-					keypoints_mouth = getSiftOnMouth(input,searchZone,mouth_classifier,detector,verbose);
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,verbose);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,verbose) ; 
 				}
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
 				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
-				if(keypoints_eyes.size() != 0){
+				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
                     extractor->compute(input, keypoints_eyes,descriptor);
 					featuresUnclustered.push_back(descriptor);
 					for(int i=0;i<descriptor.rows;i++)

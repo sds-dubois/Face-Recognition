@@ -29,7 +29,7 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	buildEyeDictionary(6,true) ;
+	buildEyeDictionary(6,false) ;
 	//compareDescriptors("../data/labeled/barack_obama/2.jpg");
 	//compareDescriptors("../data/labeled/francois_hollande/13.jpg");
 
