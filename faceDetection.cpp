@@ -138,14 +138,14 @@ CascadeClassifier getEyesCascadeClassifier()
     return eye_cascade;
 }
 
-vector<Rect> detectEye(CascadeClassifier face_classifier, Mat frame )
+vector<Rect> detectEye(CascadeClassifier eye_classifier, Mat frame )
 {
     vector<Rect> eyes;
     Mat frame_gray = frame.clone();
     equalizeHist( frame_gray, frame_gray );
 
     //-- Detect faces
-    face_classifier.detectMultiScale(frame_gray, eyes, 1.1, 3, 0,Size(30,30));
+    eye_classifier.detectMultiScale(frame_gray, eyes, 1.1, 3, 0,Size(30,30));
 
     return eyes;
 }
@@ -186,4 +186,42 @@ void showEyes(string filename){
 		cout << "Aucun oeils detecte" << endl ;
 	imshow("eyes",input) ;
 	waitKey() ;
+}
+
+CascadeClassifier getMouthCascadeClassifier()
+{
+    String mouth_cascade_name = "../lib/haarcascade_mcs_mouth.xml";
+    CascadeClassifier mouth_cascade;
+    mouth_cascade.load(mouth_cascade_name);
+    return mouth_cascade;
+}
+
+vector<Rect> detectMouth(CascadeClassifier mouth_classifier, Mat frame )
+{
+    vector<Rect> mouth;
+    Mat frame_gray = frame.clone();
+    equalizeHist( frame_gray, frame_gray );
+
+    mouth_classifier.detectMultiScale(frame_gray, mouth, 1.1, 3, 0,Size(30,30));
+
+    return mouth;
+}
+
+CascadeClassifier getNoseCascadeClassifier()
+{
+    String nose_cascade_name = "../lib/haarcascade_mcs_nose.xml";
+    CascadeClassifier nose_cascade;
+    nose_cascade.load(nose_cascade_name);
+    return nose_cascade;
+}
+
+vector<Rect> detectMouth(CascadeClassifier mouth_classifier, Mat frame )
+{
+    vector<Rect> mouth;
+    Mat frame_gray = frame.clone();
+    equalizeHist( frame_gray, frame_gray );
+
+    mouth_classifier.detectMultiScale(frame_gray, mouth, 1.1, 3, 0,Size(30,30));
+
+    return mouth;
 }

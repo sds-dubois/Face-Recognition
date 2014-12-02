@@ -21,6 +21,34 @@ using namespace boost::filesystem ;
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 
+vector<KeyPoint> getSiftOnMouth(Mat input,CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,bool verbose){
+	Mat img_with_sift ;
+	vector<KeyPoint> keypoints_best ;
+    // Generating mask for face on the image
+    vector<Rect> mouths = detectMouth(mouth_classifier, input); 
+	if(mouths.size() !=1){
+		cout << "Erreur" << endl ;
+	}
+	Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+	mask(mouths[0]) = 1;
+	if(verbose)
+		rectangle(img_with_sift,mouths[0],Scalar(0,255,0),1,8,0) ;
+	//compute the descriptors for each keypoint and put it in a single Mat object
+	Point_<float> c1 = Point_<float>(mouths[0].x+0.5*mouths[0].size().width,mouths[0].y+0.5*mouths[0].size().height);
+	float alpha = 0 ;
+	if(verbose)
+		cout << "Alpha = " << alpha << endl ;
+	keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(mouths[0].size().width+mouths[0].size().height),alpha));
+	if(verbose){
+		drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+		rectangle(img_with_sift,mouths[0],Scalar(0,255,0),1,8,0) ;
+		imshow("Keypoints",img_with_sift) ;
+		waitKey() ;
+	}
+
+	return keypoints_best ;
+}
+
 vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
@@ -107,11 +135,10 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<
 
 void buildEyeDictionary(int i,bool verbose){
     CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
 	initModule_nonfree() ;
 
-	//To store the keypoints that will be extracted by SIFT
-	vector<KeyPoint> keypoints;
-	//vector<KeyPoint> keypoints_best;
 	//To store the SIFT descriptor of current image
 	Mat descriptor;
 	//To store all the descriptors that are extracted from all the images.
@@ -131,9 +158,10 @@ void buildEyeDictionary(int i,bool verbose){
 			if(is_regular_file(it2->status())){
                 // Loading file
                 Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
-				vector<KeyPoint> keypoints_best = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
-				if(keypoints_best.size() != 0){
-                    extractor->compute(input, keypoints_best,descriptor);
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
+				vector<KeyPoint> keypoints_mouth = getSiftOnMouth(input,mouth_classifier,detector,verbose);
+				if(keypoints_eyes.size() != 0){
+                    extractor->compute(input, keypoints_eyes,descriptor);
 					featuresUnclustered.push_back(descriptor);
 				}
 			}
