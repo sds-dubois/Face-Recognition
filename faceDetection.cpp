@@ -202,7 +202,7 @@ vector<Rect> detectMouth(CascadeClassifier mouth_classifier, Mat frame )
     Mat frame_gray = frame.clone();
     equalizeHist( frame_gray, frame_gray );
 
-    mouth_classifier.detectMultiScale(frame_gray, mouth, 1.1, 3, 0,Size(30,30));
+    mouth_classifier.detectMultiScale(frame_gray, mouth, 1.2, 6, 0,Size(30,30));
 
     return mouth;
 }
@@ -215,13 +215,14 @@ CascadeClassifier getNoseCascadeClassifier()
     return nose_cascade;
 }
 
-vector<Rect> detectMouth(CascadeClassifier mouth_classifier, Mat frame )
+
+vector<Rect> detectNose(CascadeClassifier nose_classifier, Mat frame )
 {
-    vector<Rect> mouth;
+    vector<Rect> nose;
     Mat frame_gray = frame.clone();
     equalizeHist( frame_gray, frame_gray );
 
-    mouth_classifier.detectMultiScale(frame_gray, mouth, 1.1, 3, 0,Size(30,30));
+    nose_classifier.detectMultiScale(frame_gray, nose, 1.1, 3, 0,Size(30,30));
 
-    return mouth;
+    return nose;
 }
