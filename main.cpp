@@ -29,12 +29,7 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	buildEyeDictionary(3,false) ;
-	//compareDescriptors("../data/labeled/barack_obama/2.jpg");
-	//compareDescriptors("../data/labeled/francois_hollande/13.jpg");
-
-	//buildSiftDictionary(j,false) ;
-	//cout << "build OK" << endl ;
+	buildSiftDictionary(3,false) ;
 
 	//createSVMClassifier() ;
 
