@@ -22,7 +22,7 @@ using namespace boost::filesystem ;
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 const bool pca=true;
 
-vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,bool verbose){
+vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose){
 	Mat reframedImg = input(searchZone);
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
@@ -43,7 +43,6 @@ vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mo
 			rectangle(img_with_sift,mouthZone,Scalar(0,255,0),1,8,0) ;
 		//compute the descriptors for each keypoint and put it in a single Mat object
 		Point_<float> c1 = Point_<float>(mouthZone.x+0.5*mouthZone.size().width,mouthZone.y+0.5*mouthZone.size().height);
-		float alpha = 0 ;
 		if(verbose)
 			cout << "Alpha = " << alpha << endl ;
 		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(mouthZone.size().width+mouthZone.size().height),alpha));
@@ -57,7 +56,7 @@ vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mo
 	return keypoints_best ;
 }
 
-vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nose_classifier,Ptr<FeatureDetector> detector,bool verbose){
+vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nose_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose){
 	Mat img_with_sift ;
 	Mat reframedImg = input(searchZone);
 	vector<KeyPoint> keypoints_best ;
@@ -78,7 +77,6 @@ vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nos
 			rectangle(img_with_sift,nose,Scalar(0,255,0),1,8,0) ;
 		//compute the descriptors for each keypoint and put it in a single Mat object
 		Point_<float> c1 = Point_<float>(nose.x+0.5*nose.size().width,nose.y+0.5*nose.size().height);
-		float alpha = 0 ;
 		if(verbose)
 			cout << "Alpha = " << alpha << endl ;
 		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(nose.size().width+nose.size().height),alpha));
@@ -140,7 +138,7 @@ vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<
 	return keypoints_best ;
 }
 
-vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose){
+vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector, float& alpha,bool verbose){
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
     // Generating mask for face on the image
@@ -156,7 +154,7 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<
 		}
 		Point_<float> c1 = Point_<float>(eyes[0].x+0.5*eyes[0].size().width,eyes[0].y+0.5*eyes[0].size().height);
 		Point_<float> c2 = Point_<float>(eyes[1].x+0.5*eyes[1].size().width,eyes[1].y+0.5*eyes[1].size().height);
-		float alpha = (atan((c1.y-c2.y)/(c1.x-c2.x)))*180/3 ;
+		alpha = (atan((c1.y-c2.y)/(c1.x-c2.x)))*180/3 ;
 		if(verbose)
 			cout << "Alpha = " << alpha << endl ;
 		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(eyes[0].size().width+eyes[0].size().height),alpha));
@@ -213,6 +211,8 @@ void buildSiftDictionary(int i,bool verbose){
 				Rect searchZone ;
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
+				float alpha =0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,verbose);
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
@@ -220,13 +220,12 @@ void buildSiftDictionary(int i,bool verbose){
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
-					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,verbose);
-					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,verbose) ; 
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,verbose);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,verbose) ; 
 				}
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
 				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
 					extractor->compute(input, keypoints_mouth,descriptorMouth);
@@ -356,11 +355,23 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
 
 int createSVMClassifier(void) {
 	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
+
     //prepare BOW descriptor extractor from the dictionary
-    Mat dictionary; 
-    FileStorage fs("../data/dictionary.yml", FileStorage::READ);
-    fs["vocabulary"] >> dictionary;
-    fs.release();    
+	Mat eyes_dictionary;
+	Mat nose_dictionary; 
+	Mat mouth_dictionary; 
+    FileStorage fs1("../data/mouth_dictionary.yml", FileStorage::READ);
+    fs1["vocabulary"] >> mouth_dictionary;
+    fs1.release();
+	FileStorage fs2("../data/nose_dictionary.yml", FileStorage::READ);
+    fs2["vocabulary"] >> nose_dictionary;
+    fs2.release();
+	FileStorage fs3("../data/eye_dictionary.yml", FileStorage::READ);
+    fs3["vocabulary"] >> eyes_dictionary;
+    fs3.release();
     cout << "dictionary loaded" << endl ;
 
     //create a nearest neighbor matcher
@@ -370,15 +381,19 @@ int createSVMClassifier(void) {
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ; 
 
     //create BoF (or BoW) descriptor extractor
-    BOWImgDescriptorExtractor bowDE(extractor,matcher);
-    //Set the dictionary with the vocabulary we created in the first step
-    bowDE.setVocabulary(dictionary);
+    BOWImgDescriptorExtractor mouth_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor nose_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor eyes_bowDE(extractor,matcher);
+	//Set the dictionary with the vocabulary we created in the first step
+    mouth_bowDE.setVocabulary(mouth_dictionary);
+    nose_bowDE.setVocabulary(nose_dictionary);
+    eyes_bowDE.setVocabulary(eyes_dictionary);
 
     //init
 	string filename ;
     Mat input ;
     vector<KeyPoint> keypoints;
-    Mat bowDescriptor;
+    Mat mouth_bowDescriptor,eyes_bowDescriptor,nose_bowDescriptor;
 	map<int,Mat> training_set ;
 	map<int,string> names ;
 	int counter ;
@@ -389,7 +404,7 @@ int createSVMClassifier(void) {
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
-		Mat samples(0,dictionary.rows,CV_32FC1) ;
+		Mat samples(0,3*eyes_dictionary.rows,CV_32FC1) ;
 		counter = 0 ;
 		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
 			path p2 = it2->path() ;
@@ -398,22 +413,46 @@ int createSVMClassifier(void) {
 				filename = p2.string();
 				cout << filename << endl;
 				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha = 0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
+					counter ++ ;
+					eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
+					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
+					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
 
-				if(input.size[0] > 0 && input.size[1] > 0){
-					// Generating mask for face on the image
-				    vector<Rect> faces = detectFaces(face_classifier, input); 
-					if(faces.size() != 0){
-						counter ++ ;
-						Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-						mask(faces.front()) = 1; 
-						//Detect SIFT keypoints (or feature points)
-						detector->detect(input,keypoints,mask);
-						//extract BoW (or BoF) descriptor from given image
-						bowDE.compute(input,keypoints,bowDescriptor);
-						samples.push_back(bowDescriptor) ;
+					cout << eyes_bowDescriptor.size() << endl ;
+					//TODO : clean that
+					Mat full_descriptor = Mat(1,3*eyes_dictionary.rows,CV_32FC1) ; //int or float ?
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,j)=eyes_bowDescriptor.at<float>(0,j) ;
+					}	
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,eyes_dictionary.rows+j)=mouth_bowDescriptor.at<float>(0,j) ;
 					}
-					else 
-						cout << "Aucun visage detecte" << endl ;
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,2*eyes_dictionary.rows+j)=nose_bowDescriptor.at<float>(0,j) ;
+					}
+
+					samples.push_back(full_descriptor);
+					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
 				}
 			}
 		}
@@ -434,7 +473,7 @@ int createSVMClassifier(void) {
 	string fname ;
 
 	for (int x=0;x<index;x++){
-		Mat samples(0,dictionary.rows,CV_32FC1) ;
+		Mat samples(0,3*eyes_dictionary.rows,CV_32FC1) ;
 		counter = 0 ;
 
 		for(int y=0;y<index;y++){
@@ -452,7 +491,8 @@ int createSVMClassifier(void) {
 		Mat samples_32f ;
 		samples.convertTo(samples_32f, CV_32F);
 		if(samples.rows != 0){ 
-			classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
+			classifier.train_auto(samples_32f,labels,Mat(),Mat(),params);
+			//classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
 		}
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
@@ -528,6 +568,9 @@ void predict(void){
 	}
 	*/
 	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
 	CvSVM classifiers[3] ;
 	String celebrities[3] ;
 	int index = 0 ;
@@ -544,24 +587,39 @@ void predict(void){
 	cout << "Classifieurs charges" << endl ;
 	waitKey() ;
 
-	//prepare BOW descriptor extractor from the dictionary
-    Mat dictionary; 
-    FileStorage fs("../data/dictionary.yml", FileStorage::READ);
-    fs["vocabulary"] >> dictionary;
-    fs.release();    
+	 //prepare BOW descriptor extractor from the dictionary
+	Mat eyes_dictionary;
+	Mat nose_dictionary; 
+	Mat mouth_dictionary; 
+    FileStorage fs1("../data/mouth_dictionary.yml", FileStorage::READ);
+    fs1["vocabulary"] >> mouth_dictionary;
+    fs1.release();
+	FileStorage fs2("../data/nose_dictionary.yml", FileStorage::READ);
+    fs2["vocabulary"] >> nose_dictionary;
+    fs2.release();
+	FileStorage fs3("../data/eye_dictionary.yml", FileStorage::READ);
+    fs3["vocabulary"] >> eyes_dictionary;
+    fs3.release();
     cout << "dictionary loaded" << endl ;
+
     //create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
 	//The SIFT feature extractor and descriptor
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; 
-	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ;
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ; 
+
     //create BoF (or BoW) descriptor extractor
-    BOWImgDescriptorExtractor bowDE(extractor,matcher);
-    //Set the dictionary with the vocabulary we created in the first step
-    bowDE.setVocabulary(dictionary);
+    BOWImgDescriptorExtractor mouth_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor nose_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor eyes_bowDE(extractor,matcher);
+	//Set the dictionary with the vocabulary we created in the first step
+    mouth_bowDE.setVocabulary(mouth_dictionary);
+    nose_bowDE.setVocabulary(nose_dictionary);
+    eyes_bowDE.setVocabulary(eyes_dictionary);
+
 	Mat input ;
     vector<KeyPoint> keypoints;  
-    Mat bowDescriptor;   
+    Mat mouth_bowDescriptor,eyes_bowDescriptor,nose_bowDescriptor;
 	string filename;
 
 	for (directory_iterator it1("../data/unlabeled"); it1 != directory_iterator() ; it1++) { //each folder in ../data
@@ -573,37 +631,56 @@ void predict(void){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
 				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
-				if(input.size[0] > 0 && input.size[1] > 0){
-					// Generating mask for face on the image
-				    vector<Rect> faces = detectFaces(face_classifier, input);
-					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
-					if(faces.size() == 0)
-						cout << "Aucun visage detecte" << endl ;
-					else{
-						if(faces.size() > 1 )
-							cout << "Note : more than one face detected" << endl ;
-						mask(faces.front()) = 1;
-						//Detect SIFT keypoints (or feature points)
-						detector->detect(input,keypoints,mask);
-						if(keypoints.size() >0){
-							bowDE.compute(input,keypoints,bowDescriptor);
-							float min = 2  ;
-							int prediction =0 ;
-							for(int x=0;x<3;x++){
-								if (classifiers[x].predict(bowDescriptor,true) < min){
-									prediction = x ;
-									min = classifiers[x].predict(bowDescriptor,true) ;
-								}
-								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
-							}
-							cout <<endl ;
-							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
-						}
-						else{
-							cout << "No keypoints found" << endl ;
-						}
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha = 0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);				
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
+					eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
+					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
+					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
+
+					Mat full_descriptor = Mat(1,3*eyes_dictionary.rows,CV_32FC1) ; //int or float ?
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,j)=eyes_bowDescriptor.at<float>(0,j) ;
+					}	
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,eyes_dictionary.rows+j)=mouth_bowDescriptor.at<float>(0,j) ;
 					}
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,2*eyes_dictionary.rows+j)=nose_bowDescriptor.at<float>(0,j) ;
+					}
+
+					float min = 2  ;
+					int prediction =0 ;
+					for(int x=0;x<3;x++){
+						if (classifiers[x].predict(full_descriptor,true) < min){
+							prediction = x ;
+							min = classifiers[x].predict(full_descriptor,true) ;
+						}
+						cout << classifiers[x].predict(full_descriptor,true) << " " ;
+					}
+					cout <<endl ;
+					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+				}
+				else{
+					cout << "No keypoints found" << endl ;
 				}
 				cout << endl ;
 			}
@@ -621,37 +698,57 @@ void predict(void){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
 				filename = p2.string() ;
-				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale     
-				if(input.size[0] > 0 && input.size[1] > 0){
-					// Generating mask for face on the image
-				    vector<Rect> faces = detectFaces(face_classifier, input);
-					Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U);
-					if(faces.size() == 0)
-						cout << "Aucun visage detecte" << endl ;
-					else{
-						if(faces.size() > 1 )
-							cout << "Note : more than one face detected" << endl ;
-						mask(faces.front()) = 1;
-						//Detect SIFT keypoints (or feature points)
-						detector->detect(input,keypoints,mask);
-						if(keypoints.size() >0){
-							bowDE.compute(input,keypoints,bowDescriptor);
-							float min = 2  ;
-							int prediction =0 ;
-							for(int x=0;x<3;x++){
-								if (classifiers[x].predict(bowDescriptor,true) < min){
-									prediction = x ;
-									min = classifiers[x].predict(bowDescriptor,true) ;
-								}
-								cout << classifiers[x].predict(bowDescriptor,true) << " " ;
-							}
-							cout <<endl ;
-							cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
-						}
-						else{
-							cout << "No keypoints found" << endl ;
-						}
+				input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha = 0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
+					eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
+					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
+					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
+
+					//TODO : clean that
+					Mat full_descriptor = Mat(1,3*eyes_dictionary.rows,CV_32FC1) ; //int or float ?
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,j)=eyes_bowDescriptor.at<float>(0,j) ;
+					}	
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,eyes_dictionary.rows+j)=mouth_bowDescriptor.at<float>(0,j) ;
 					}
+					for(int j =0; j<eyes_dictionary.rows;j++){
+						full_descriptor.at<float>(0,2*eyes_dictionary.rows+j)=nose_bowDescriptor.at<float>(0,j) ;
+					}
+
+					float min = 2  ;
+					int prediction =0 ;
+					for(int x=0;x<3;x++){
+						if (classifiers[x].predict(full_descriptor,true) < min){
+							prediction = x ;
+							min = classifiers[x].predict(full_descriptor,true) ;
+						}
+						cout << classifiers[x].predict(full_descriptor,true) << " " ;
+					}
+					cout <<endl ;
+					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+				}
+				else{
+					cout << "No keypoints found" << endl ;
 				}
 				cout << endl ;
 			}
