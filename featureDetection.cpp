@@ -295,6 +295,7 @@ void buildSiftDictionary(int i,bool verbose){
 }
 
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title){
+	cout << "Nbr classes : " << featuresUnclustered.rows << endl ;
 	int num_components = 10;
     PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
     Mat mean = principalCA.mean.clone();
@@ -342,6 +343,7 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
             Mat feature_i = featuresUnclustered.row(i);
             int x = feature_i.dot(x_vector);
             int y = feature_i.dot(y_vector);
+			cout << "Point : " << (int)height*(x-x_min)/(x_max-x_min) << " - " << (int)width*(y-y_min)/(y_max-y_min) << " classe " << classesUnclustered.at(i) << endl ;
             Scalar color(255, 0, 0);
             if(classesUnclustered.at(i) == 1)
                 color = Scalar(0, 255, 0);
@@ -355,13 +357,8 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
 	}
 }
 
-int createSVMClassifier(void) {
-	CascadeClassifier face_classifier = getFaceCascadeClassifier();
-	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
-    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
-    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
-
-    //prepare BOW descriptor extractor from the dictionary
+int init_bowDE(BOWImgDescriptorExtractor& mouth_bowDE,BOWImgDescriptorExtractor& eyes_bowDE,BOWImgDescriptorExtractor& nose_bowDE){
+	//prepare BOW descriptor extractor from the dictionary
 	Mat eyes_dictionary;
 	Mat nose_dictionary; 
 	Mat mouth_dictionary; 
@@ -376,6 +373,25 @@ int createSVMClassifier(void) {
     fs3.release();
     cout << "dictionary loaded" << endl ;
 
+	//Set the dictionary with the vocabulary we created in the first step
+    mouth_bowDE.setVocabulary(mouth_dictionary);
+    nose_bowDE.setVocabulary(nose_dictionary);
+    eyes_bowDE.setVocabulary(eyes_dictionary);
+
+	int dim = mouth_dictionary.rows ;
+
+	return dim ;
+}
+
+
+int createSVMClassifier(void) {
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
+
+    
+
     //create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
 	//The SIFT feature extractor and descriptor
@@ -386,27 +402,29 @@ int createSVMClassifier(void) {
     BOWImgDescriptorExtractor mouth_bowDE(extractor,matcher);
     BOWImgDescriptorExtractor nose_bowDE(extractor,matcher);
     BOWImgDescriptorExtractor eyes_bowDE(extractor,matcher);
-	//Set the dictionary with the vocabulary we created in the first step
-    mouth_bowDE.setVocabulary(mouth_dictionary);
-    nose_bowDE.setVocabulary(nose_dictionary);
-    eyes_bowDE.setVocabulary(eyes_dictionary);
+
+	int dim = init_bowDE(mouth_bowDE,eyes_bowDE,nose_bowDE);
 
     //init
 	string filename ;
     Mat input ;
     vector<KeyPoint> keypoints;
-    Mat mouth_bowDescriptor,eyes_bowDescriptor,nose_bowDescriptor;
+    Mat mouth_bowDescriptor;
+	Mat eyes_bowDescriptor;
+	Mat nose_bowDescriptor;
 	map<int,Mat> training_set ;
 	map<int,string> names ;
 	int counter ;
 	int index = 0 ;
 	string celebrityName ;
+	vector<int> classes ;
+	Mat all_samples ;
 
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
-		Mat samples(0,3*eyes_dictionary.rows,CV_32FC1) ;
+		Mat samples(0,3*dim,CV_32FC1) ;
 		counter = 0 ;
 		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
 			path p2 = it2->path() ;
@@ -436,23 +454,22 @@ int createSVMClassifier(void) {
 				}
 				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
 					counter ++ ;
+					classes.push_back(index);
 					eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
 					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
 					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
-
-					cout << eyes_bowDescriptor.size() << endl ;
 					//TODO : clean that
-					Mat full_descriptor = Mat(1,3*eyes_dictionary.rows,CV_32FC1) ; //int or float ?
-					for(int j =0; j<eyes_dictionary.rows;j++){
+					Mat full_descriptor = Mat(1,3*dim,CV_32FC1) ; //int or float ?
+					for(int j =0; j<dim;j++){
 						full_descriptor.at<float>(0,j)=eyes_bowDescriptor.at<float>(0,j) ;
 					}	
-					for(int j =0; j<eyes_dictionary.rows;j++){
-						full_descriptor.at<float>(0,eyes_dictionary.rows+j)=mouth_bowDescriptor.at<float>(0,j) ;
+					for(int j =0; j<dim;j++){
+						full_descriptor.at<float>(0,dim+j)=mouth_bowDescriptor.at<float>(0,j) ;
 					}
-					for(int j =0; j<eyes_dictionary.rows;j++){
-						full_descriptor.at<float>(0,2*eyes_dictionary.rows+j)=nose_bowDescriptor.at<float>(0,j) ;
+					for(int j =0; j<dim;j++){
+						full_descriptor.at<float>(0,2*dim+j)=nose_bowDescriptor.at<float>(0,j) ;
 					}
-
+					cout << full_descriptor << endl << endl ;
 					samples.push_back(full_descriptor);
 					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
 				}
@@ -460,12 +477,16 @@ int createSVMClassifier(void) {
 		}
 		if (counter > 0 ){
 			training_set.insert(pair<int,Mat>(index,samples)) ;
+			all_samples.push_back(samples);
 			names.insert(pair<int,string>(index,celebrityName)) ;
 			index ++ ;
 		}
 	}
         
 	cout << "Images chargees et analysees" << endl ;
+	cout << "Classes " << classes.size() << endl ;
+
+	showPCA(all_samples,classes,"descriptors") ;
 
 	CvSVMParams params = chooseSVMParams() ;
 	vector<CvParamGrid> grids = chooseSVMGrids() ;
@@ -475,7 +496,7 @@ int createSVMClassifier(void) {
 	string fname ;
 
 	for (int x=0;x<index;x++){
-		Mat samples(0,3*eyes_dictionary.rows,CV_32FC1) ;
+		Mat samples(0,3*dim,CV_32FC1) ;
 		counter = 0 ;
 
 		for(int y=0;y<index;y++){
@@ -493,7 +514,7 @@ int createSVMClassifier(void) {
 		Mat samples_32f ;
 		samples.convertTo(samples_32f, CV_32F);
 		if(samples.rows != 0){ 
-			classifier.train_auto(samples_32f,labels,Mat(),Mat(),params);
+			classifier.train(samples_32f,labels,Mat(),Mat(),params);
 			//classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
 		}
 		else
@@ -515,10 +536,10 @@ int createSVMClassifier(void) {
 CvSVMParams chooseSVMParams(void){
 	CvSVMParams params;
     params.svm_type    = CvSVM::C_SVC;
-	params.kernel_type = CvSVM::POLY;
-	params.degree = 3 ;
-	params.gamma =  5;
-	params.coef0 = 1 ;
+	params.kernel_type = CvSVM::LINEAR;
+	//params.degree = 3 ;
+	//params.gamma =  5;
+	//params.coef0 = 1 ;
     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 
 	return params ;
