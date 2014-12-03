@@ -29,7 +29,7 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	//buildSiftDictionary(3,true) ;
+	//buildSiftDictionary(3,false) ;
 
 	//createSVMClassifier() ;
 

@@ -143,7 +143,9 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<
 	vector<KeyPoint> keypoints_best ;
     // Generating mask for face on the image
     vector<Rect> eyes = detectEye(eyes_classifier, input); 
-	if(eyes.size() == 2){
+	if(eyes.size() >= 2){
+		if(eyes.size() >2)
+			cout << "Attention : plus de deux yeux trouvees" << endl;
 		Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
 		for (int k=0;k<2;k++){
 			mask(eyes[k]) = 1;
@@ -169,7 +171,7 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<
 		}
 	}
 	else
-		cout << "Error in sift detection" << endl ;
+		cout << "Error in eyes detection" << endl ;
 
 	return keypoints_best ;
 }
