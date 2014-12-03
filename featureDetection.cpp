@@ -184,9 +184,14 @@ void buildEyeDictionary(int i,bool verbose){
 	initModule_nonfree() ;
 
 	//To store the SIFT descriptor of current image
-	Mat descriptor;
+	Mat descriptorEyes;
+	Mat descriptorMouth;
+	Mat descriptorNose;
 	//To store all the descriptors that are extracted from all the images.
-	Mat featuresUnclustered;
+	Mat eyesFeaturesUnclustered;
+	Mat mouthFeaturesUnclustered;
+	Mat noseFeaturesUnclustered;
+	vector<int> classesUnclustered_eyes;
 	vector<int> classesUnclustered;
 	//The SIFT feature extractor and descriptor
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
@@ -223,10 +228,16 @@ void buildEyeDictionary(int i,bool verbose){
 				}
 				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,verbose);
 				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
-                    extractor->compute(input, keypoints_eyes,descriptor);
-					featuresUnclustered.push_back(descriptor);
-					for(int i=0;i<descriptor.rows;i++)
-                        classesUnclustered.push_back(classPolitician);
+                    extractor->compute(input, keypoints_eyes,descriptorEyes);
+					extractor->compute(input, keypoints_mouth,descriptorMouth);
+					extractor->compute(input, keypoints_nose,descriptorNose);
+					eyesFeaturesUnclustered.push_back(descriptorEyes);
+					mouthFeaturesUnclustered.push_back(descriptorMouth);
+					noseFeaturesUnclustered.push_back(descriptorNose);
+					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
+					classesUnclustered.push_back(classPolitician);
+					for(int i=0;i<2;i++)
+						classesUnclustered_eyes.push_back(classPolitician);
 				}
 			}
 		}
@@ -234,68 +245,17 @@ void buildEyeDictionary(int i,bool verbose){
 	}
 
 
-	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
+	cout << "features Unclustered " << mouthFeaturesUnclustered.size() << endl ;
 	cout << "classes : " << classesUnclustered.size() << endl;
 
 	if(pca){
-        int num_components = 10;
-        PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
-        Mat mean = principalCA.mean.clone();
-        Mat eigenvectors = principalCA.eigenvectors.clone();
-
-        for(int j=0;j<num_components/2;j++){
-            Mat x_vector = eigenvectors.row(j);
-            Mat y_vector = eigenvectors.row(j+1);
-
-            float x_max,y_max,x_min, y_min;
-            bool init=true;
-
-            int width = 400;
-            int height = 1200;
-            Mat planePCA = Mat::zeros(width, height, CV_8UC3);
-            for(int i=0;i<featuresUnclustered.rows;i++){
-                Mat feature_i = featuresUnclustered.row(i);
-                int x = feature_i.dot(x_vector);
-                int y = feature_i.dot(y_vector);
-
-                if(init){
-                    x_max = x;
-                    x_min = x;
-                    y_min = y;
-                    y_max = y;
-                    init=false;
-                }
-
-                if(x > x_max)
-                    x_max = x;
-                if(x<x_min)
-                    x_min = x;
-                if(y < y_min)
-                    y_min = y;
-                if(y > y_max)
-                    y_max = y;
-            }
-            float delta = y_max - y_min;
-            y_max += delta/5;
-            y_min -= delta/5;
-            delta = x_max-x_min;
-            x_max += delta/5;
-            x_min -= delta/5;
-            for(int i=0;i<featuresUnclustered.rows;i++){
-                Mat feature_i = featuresUnclustered.row(i);
-                int x = feature_i.dot(x_vector);
-                int y = feature_i.dot(y_vector);
-                Scalar color(255, 0, 0);
-                if(classesUnclustered.at(i) == 1)
-                    color = Scalar(0, 255, 0);
-                else if(classesUnclustered.at(i) == 2)
-                    color = Scalar(0, 0, 255);
-                circle(planePCA, Point((int)height*(x-x_min)/(x_max-x_min), (int)width*(y-y_min)/(y_max-y_min)), 5, color);
-
-            }
-            imshow("PCA", planePCA);
-            waitKey();
-        }
+		cout << endl;
+		cout << "Show PCA for eyes " << endl ;
+		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
+		cout << "Show PCA for mouth " << endl ;
+		showPCA(mouthFeaturesUnclustered,classesUnclustered,"Mouth");
+		cout << "Show PCA for nose " << endl ;
+		showPCA(noseFeaturesUnclustered,classesUnclustered,"Nose");
 	}
 
 	//Construct BOWKMeansTrainer
@@ -307,18 +267,91 @@ void buildEyeDictionary(int i,bool verbose){
 	int retries=1;
 	//necessary flags
 	int flags=KMEANS_PP_CENTERS;
+
 	//Create the BoW (or BoF) trainer
-	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
+	BOWKMeansTrainer bowTrainerEyes(dictionarySize,tc,retries,flags);
 	//cluster the feature vectors
-	Mat dictionary=bowTrainer.cluster(featuresUnclustered) ;
-	cout << "Dico cree" << endl ;
+	Mat dictionaryEyes=bowTrainerEyes.cluster(eyesFeaturesUnclustered) ;
 	//store the vocabulary
-	FileStorage fs("../data/dictionary.yml", FileStorage::WRITE);
-	fs << "vocabulary" << dictionary;
-	fs.release();
+	FileStorage fs1("../data/eye_dictionary.yml", FileStorage::WRITE);
+	fs1 << "vocabulary" << dictionaryEyes;
+	fs1.release();
+
+	BOWKMeansTrainer bowTrainerMouth(dictionarySize,tc,retries,flags);
+	Mat dictionaryMouth=bowTrainerMouth.cluster(mouthFeaturesUnclustered) ;
+	FileStorage fs2("../data/mouth_dictionary.yml", FileStorage::WRITE);
+	fs2 << "vocabulary" << dictionaryMouth;
+	fs2.release();
+
+	BOWKMeansTrainer bowTrainerNose(dictionarySize,tc,retries,flags);
+	Mat dictionaryNose=bowTrainerNose.cluster(noseFeaturesUnclustered) ;
+	FileStorage fs3("../data/nose_dictionary.yml", FileStorage::WRITE);
+	fs3 << "vocabulary" << dictionaryNose;
+	fs3.release();
 
 	cout << " Dictionnaire OK" << endl ;
 	
+}
+
+void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title){
+	int num_components = 10;
+    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
+    Mat mean = principalCA.mean.clone();
+    Mat eigenvectors = principalCA.eigenvectors.clone();
+
+    for(int j=0;j<num_components/2;j++){
+        Mat x_vector = eigenvectors.row(j);
+        Mat y_vector = eigenvectors.row(j+1);
+
+        float x_max,y_max,x_min, y_min;
+        bool init=true;
+
+        int width = 400;
+        int height = 1200;
+        Mat planePCA = Mat::zeros(width, height, CV_8UC3);
+        for(int i=0;i<featuresUnclustered.rows;i++){
+            Mat feature_i = featuresUnclustered.row(i);
+            int x = feature_i.dot(x_vector);
+            int y = feature_i.dot(y_vector);
+
+            if(init){
+                x_max = x;
+                x_min = x;
+                y_min = y;
+                y_max = y;
+                init=false;
+            }
+
+            if(x > x_max)
+                x_max = x;
+            if(x<x_min)
+                x_min = x;
+            if(y < y_min)
+                y_min = y;
+            if(y > y_max)
+                y_max = y;
+        }
+        float delta = y_max - y_min;
+        y_max += delta/5;
+        y_min -= delta/5;
+        delta = x_max-x_min;
+        x_max += delta/5;
+        x_min -= delta/5;
+        for(int i=0;i<featuresUnclustered.rows;i++){
+            Mat feature_i = featuresUnclustered.row(i);
+            int x = feature_i.dot(x_vector);
+            int y = feature_i.dot(y_vector);
+            Scalar color(255, 0, 0);
+            if(classesUnclustered.at(i) == 1)
+                color = Scalar(0, 255, 0);
+            else if(classesUnclustered.at(i) == 2)
+                color = Scalar(0, 0, 255);
+            circle(planePCA, Point((int)height*(x-x_min)/(x_max-x_min), (int)width*(y-y_min)/(y_max-y_min)), 5, color);
+
+        }
+        imshow("PCA " + title, planePCA);
+        waitKey();
+	}
 }
 
 void compareDescriptors(string f){

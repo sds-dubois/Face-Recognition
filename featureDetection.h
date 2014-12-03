@@ -15,6 +15,7 @@ using namespace cv ;
 void buildSiftDictionary(int i,bool verbose) ;
 void buildEyeDictionary(int i,bool verbose) ;
 void compareDescriptors(string filename) ;
+void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
 CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 int createSVMClassifier(void) ;
