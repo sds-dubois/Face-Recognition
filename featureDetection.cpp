@@ -192,7 +192,8 @@ void buildSiftDictionary(int i,bool verbose){
 	Mat mouthFeaturesUnclustered;
 	Mat noseFeaturesUnclustered;
 	vector<int> classesUnclustered_eyes;
-	vector<int> classesUnclustered;
+	vector<int> classesUnclustered_mouth;
+	vector<int> classesUnclustered_nose;
 	//The SIFT feature extractor and descriptor
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
@@ -228,17 +229,24 @@ void buildSiftDictionary(int i,bool verbose){
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
+				if(keypoints_eyes.size() != 0){
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
-					extractor->compute(input, keypoints_mouth,descriptorMouth);
-					extractor->compute(input, keypoints_nose,descriptorNose);
 					eyesFeaturesUnclustered.push_back(descriptorEyes);
-					mouthFeaturesUnclustered.push_back(descriptorMouth);
-					noseFeaturesUnclustered.push_back(descriptorNose);
-					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
-					classesUnclustered.push_back(classPolitician);
 					for(int i=0;i<2;i++)
 						classesUnclustered_eyes.push_back(classPolitician);
+				}
+				if(keypoints_mouth.size() != 0){
+					extractor->compute(input, keypoints_mouth,descriptorMouth);
+					mouthFeaturesUnclustered.push_back(descriptorMouth);
+					classesUnclustered_mouth.push_back(classPolitician);
+				}
+				if(keypoints_nose.size() != 0){
+					extractor->compute(input, keypoints_nose,descriptorNose);
+					noseFeaturesUnclustered.push_back(descriptorNose);
+					classesUnclustered_nose.push_back(classPolitician);
+				}
+				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
+					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
 				}
 			}
 		}
@@ -247,16 +255,16 @@ void buildSiftDictionary(int i,bool verbose){
 
 
 	cout << "features Unclustered " << mouthFeaturesUnclustered.size() << endl ;
-	cout << "classes : " << classesUnclustered.size() << endl;
+	cout << "classes : -mouth " << classesUnclustered_mouth.size() << " -noses : " << classesUnclustered_mouth.size()<< endl;
 
 	if(pca){
 		cout << endl;
 		cout << "Show PCA for eyes " << endl ;
 		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
 		cout << "Show PCA for mouth " << endl ;
-		showPCA(mouthFeaturesUnclustered,classesUnclustered,"Mouth");
+		showPCA(mouthFeaturesUnclustered,classesUnclustered_mouth,"Mouth");
 		cout << "Show PCA for nose " << endl ;
-		showPCA(noseFeaturesUnclustered,classesUnclustered,"Nose");
+		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
 	}
 
 	//Construct BOWKMeansTrainer
@@ -452,23 +460,32 @@ int createSVMClassifier(void) {
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				if(keypoints_eyes.size() != 0 && keypoints_mouth.size() != 0 && keypoints_nose.size() != 0){
-					counter ++ ;
-					classes.push_back(index);
-					eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
-					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
-					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
-					//TODO : clean that
-					Mat full_descriptor = Mat(1,3*dim,CV_32FC1) ; //int or float ?
+				//TODO : clean that
+				Mat full_descriptor = Mat::zeros(1,3*dim,CV_32FC1) ; //int or float ?
+				if(keypoints_eyes.size() != 0){
+					cout << "eyes ok" << endl ;
+                    eyes_bowDE.compute(input, keypoints_eyes,eyes_bowDescriptor);
 					for(int j =0; j<dim;j++){
 						full_descriptor.at<float>(0,j)=eyes_bowDescriptor.at<float>(0,j) ;
-					}	
+					}
+				}
+				if(keypoints_mouth.size() != 0){
+					cout << "mouth ok" << endl ;
+					mouth_bowDE.compute(input, keypoints_mouth,mouth_bowDescriptor);
 					for(int j =0; j<dim;j++){
 						full_descriptor.at<float>(0,dim+j)=mouth_bowDescriptor.at<float>(0,j) ;
 					}
+				}
+				if(keypoints_nose.size() != 0){
+					cout << "nose ok " << endl ;
+					nose_bowDE.compute(input, keypoints_nose,nose_bowDescriptor);
 					for(int j =0; j<dim;j++){
 						full_descriptor.at<float>(0,2*dim+j)=nose_bowDescriptor.at<float>(0,j) ;
 					}
+				}
+				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+					counter ++ ;
+					classes.push_back(index);
 					cout << full_descriptor << endl << endl ;
 					samples.push_back(full_descriptor);
 					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
