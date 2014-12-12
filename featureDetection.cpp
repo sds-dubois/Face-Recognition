@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <stdio.h>
+#include <set>
 
 
 using namespace std;
@@ -253,7 +254,6 @@ void buildSiftDictionary(int i,bool verbose){
 		classPolitician++;
 	}
 
-
 	cout << "features Unclustered " << mouthFeaturesUnclustered.size() << endl ;
 	cout << "classes : -mouth " << classesUnclustered_mouth.size() << " -noses : " << classesUnclustered_mouth.size()<< endl;
 
@@ -341,23 +341,32 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
             if(y > y_max)
                 y_max = y;
         }
-        float delta = y_max - y_min;
-        y_max += delta/5;
-        y_min -= delta/5;
-        delta = x_max-x_min;
-        x_max += delta/5;
-        x_min -= delta/5;
+        float deltay = y_max - y_min;
+        y_max += deltay/5;
+        y_min -= deltay/5;
+        float deltax = x_max-x_min;
+        x_max += deltax/5;
+        x_min -= deltax/5;
         for(int i=0;i<featuresUnclustered.rows;i++){
             Mat feature_i = featuresUnclustered.row(i);
             int x = feature_i.dot(x_vector);
             int y = feature_i.dot(y_vector);
-			cout << "Point : " << (int)height*(x-x_min)/(x_max-x_min) << " - " << (int)width*(y-y_min)/(y_max-y_min) << " classe " << classesUnclustered.at(i) << endl ;
             Scalar color(255, 0, 0);
             if(classesUnclustered.at(i) == 1)
                 color = Scalar(0, 255, 0);
             else if(classesUnclustered.at(i) == 2)
                 color = Scalar(0, 0, 255);
-            circle(planePCA, Point((int)height*(x-x_min)/(x_max-x_min), (int)width*(y-y_min)/(y_max-y_min)), 5, color);
+			Point p;
+			if(deltax !=0)
+				p.x=(int)height*(x-x_min)/(x_max-x_min);
+			else
+				p.x=height/2 ;
+			if(deltay !=0)
+				p.y=(int)width*(y-y_min)/(y_max-y_min) ;
+			else
+				p.y=width/2 ;
+            circle(planePCA,p, 5, color);
+			cout << "Point : " << p.x << " - " << p.y << " classe " << classesUnclustered.at(i) << endl ;
 
         }
         imshow("PCA " + title, planePCA);
@@ -391,14 +400,11 @@ int init_bowDE(BOWImgDescriptorExtractor& mouth_bowDE,BOWImgDescriptorExtractor&
 	return dim ;
 }
 
-
 int createSVMClassifier(void) {
 	CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
     CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
     CascadeClassifier nose_classifier = getNoseCascadeClassifier();
-
-    
 
     //create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
@@ -412,6 +418,7 @@ int createSVMClassifier(void) {
     BOWImgDescriptorExtractor eyes_bowDE(extractor,matcher);
 
 	int dim = init_bowDE(mouth_bowDE,eyes_bowDE,nose_bowDE);
+	vector<Mat> hists ;
 
     //init
 	string filename ;
@@ -488,6 +495,23 @@ int createSVMClassifier(void) {
 					classes.push_back(index);
 					cout << full_descriptor << endl << endl ;
 					samples.push_back(full_descriptor);
+					if(hists.empty())
+						hists.push_back(full_descriptor) ;
+					bool estPas =true ;
+					for (vector<Mat>::iterator it = hists.begin() ; it != hists.end() && estPas; it ++){ 
+						bool estIdentique = true;
+						for(int k=0; k < 3*dim && estIdentique; k++){
+							if(full_descriptor.at<float>(0,k) != (*it).at<float>(0,k))
+								estIdentique = false ;
+						}
+						if(estIdentique)
+							estPas = false;
+					}
+					if(estPas){
+						hists.push_back(full_descriptor) ;
+						cout << "New hist. Count = " << hists.size() << endl ; 
+					}
+					cout << "Nombre d'histogrammes " << hists.size() << endl ;
 					cout << ">>>>>>>>> Success for : " << it2->path() << endl << endl;
 				}
 			}
@@ -499,7 +523,8 @@ int createSVMClassifier(void) {
 			index ++ ;
 		}
 	}
-        
+    
+	cout << "Il y a " << hists.size() << " différents" << endl ;
 	cout << "Images chargees et analysees" << endl ;
 	cout << "Classes " << classes.size() << endl ;
 
