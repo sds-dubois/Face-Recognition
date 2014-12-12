@@ -201,7 +201,7 @@ void buildSiftDictionary(int i,bool verbose){
 	Mat img_with_sift;
 
 	//Images to extract feature descriptors and build the vocabulary
-	int classPolitician=0;
+	int classPolitician=1;
 	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		cout << "Folder " << p.string() << endl ;
@@ -257,23 +257,13 @@ void buildSiftDictionary(int i,bool verbose){
 	cout << "features Unclustered " << mouthFeaturesUnclustered.size() << endl ;
 	cout << "classes : -mouth " << classesUnclustered_mouth.size() << " -noses : " << classesUnclustered_mouth.size()<< endl;
 
-	if(pca){
-		cout << endl;
-		cout << "Show PCA for eyes " << endl ;
-		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
-		cout << "Show PCA for mouth " << endl ;
-		showPCA(mouthFeaturesUnclustered,classesUnclustered_mouth,"Mouth");
-		cout << "Show PCA for nose " << endl ;
-		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
-	}
-
 	//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=i;
 	//define Term Criteria
 	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
 	//retries number
-	int retries=1;
+	int retries=3;
 	//necessary flags
 	int flags=KMEANS_PP_CENTERS;
 
@@ -285,20 +275,41 @@ void buildSiftDictionary(int i,bool verbose){
 	FileStorage fs1("../data/eye_dictionary.yml", FileStorage::WRITE);
 	fs1 << "vocabulary" << dictionaryEyes;
 	fs1.release();
-
+	eyesFeaturesUnclustered.push_back(dictionaryEyes) ;
+	for(int k=0;k<dictionarySize;k++){
+		classesUnclustered_eyes.push_back(0) ;
+	}
+	
 	BOWKMeansTrainer bowTrainerMouth(dictionarySize,tc,retries,flags);
 	Mat dictionaryMouth=bowTrainerMouth.cluster(mouthFeaturesUnclustered) ;
 	FileStorage fs2("../data/mouth_dictionary.yml", FileStorage::WRITE);
 	fs2 << "vocabulary" << dictionaryMouth;
 	fs2.release();
+	mouthFeaturesUnclustered.push_back(dictionaryMouth) ;
+	for(int k=0;k<dictionarySize;k++){
+		classesUnclustered_mouth.push_back(0) ;
+	}
 
 	BOWKMeansTrainer bowTrainerNose(dictionarySize,tc,retries,flags);
 	Mat dictionaryNose=bowTrainerNose.cluster(noseFeaturesUnclustered) ;
 	FileStorage fs3("../data/nose_dictionary.yml", FileStorage::WRITE);
 	fs3 << "vocabulary" << dictionaryNose;
 	fs3.release();
+	noseFeaturesUnclustered.push_back(dictionaryNose) ;
+	for(int k=0;k<dictionarySize;k++){
+		classesUnclustered_nose.push_back(0) ;
+	}
 
 	cout << " Dictionnaire OK" << endl ;
+		if(pca){
+		cout << endl;
+		cout << "Show PCA for eyes " << endl ;
+		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
+		cout << "Show PCA for mouth " << endl ;
+		showPCA(mouthFeaturesUnclustered,classesUnclustered_mouth,"Mouth");
+		cout << "Show PCA for nose " << endl ;
+		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
+	}
 	
 }
 
@@ -351,10 +362,12 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
             Mat feature_i = featuresUnclustered.row(i);
             int x = feature_i.dot(x_vector);
             int y = feature_i.dot(y_vector);
-            Scalar color(255, 0, 0);
+            Scalar color(255, 255, 255);
             if(classesUnclustered.at(i) == 1)
-                color = Scalar(0, 255, 0);
+                color = Scalar(255,0, 0);
             else if(classesUnclustered.at(i) == 2)
+                color = Scalar(0, 255, 0);
+			else if(classesUnclustered.at(i) == 3)
                 color = Scalar(0, 0, 255);
 			Point p;
 			if(deltax !=0)
