@@ -313,6 +313,210 @@ void buildSiftDictionary(int i,bool verbose){
 	
 }
 
+vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
+	initModule_nonfree() ;
+
+	//To store the SIFT descriptor of current image
+	Mat descriptorEyes;
+	Mat descriptorMouth;
+	Mat descriptorNose;
+	//To store all the descriptors that are extracted from all the images.
+	Mat eyesFeaturesUnclustered;
+	Mat mouthFeaturesUnclustered;
+	Mat noseFeaturesUnclustered;
+	vector<int> classesUnclustered_eyes;
+	vector<int> classesUnclustered_mouth;
+	vector<int> classesUnclustered_nose;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
+	Mat img_with_sift;
+
+	map<int,Mat> eyes_training_set,mouth_training_set,nose_training_set ;
+	map<int,string> names ;
+	int counter ;
+	int index = 0 ;
+	string celebrityName ;
+	vector<int> classes ;
+
+
+	//Images to extract feature descriptors and build the vocabulary
+	int classPolitician=1;
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		celebrityName = p.filename().string() ;
+		cout << " -- Traite : " << celebrityName << endl ;
+		Mat eyes_samples = Mat(0,128,CV_32FC1);
+		Mat mouth_samples = Mat(0,128,CV_32FC1);
+		Mat nose_samples = Mat(0,128,CV_32FC1);		
+		counter = 0 ;
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+                // Loading file
+                Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha =0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,verbose);
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,verbose);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,verbose) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() != 0){
+					cout << "eyes ok" << endl ;
+                    extractor->compute(input, keypoints_eyes,descriptorEyes);
+					eyesFeaturesUnclustered.push_back(descriptorEyes);
+					classesUnclustered_eyes.push_back(classPolitician);
+					for (int k=0;k<128;k++){
+						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					}
+				}
+				if(keypoints_mouth.size() != 0){
+					cout << "mouth ok" << endl ;
+					extractor->compute(input, keypoints_mouth,descriptorMouth);
+					mouthFeaturesUnclustered.push_back(descriptorMouth);
+				}
+				else
+					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_nose.size() != 0){
+					cout << "nose ok " << endl ;
+					extractor->compute(input, keypoints_nose,descriptorNose);
+					noseFeaturesUnclustered.push_back(descriptorNose);
+				}
+				else
+					descriptorNose = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+					counter ++ ;
+					classes.push_back(index);
+					eyes_samples.push_back(avg_descriptorEyes);
+					mouth_samples.push_back(descriptorMouth);
+					nose_samples.push_back(descriptorNose);
+					classesUnclustered_eyes.push_back(classPolitician);
+					classesUnclustered_mouth.push_back(classPolitician);
+					classesUnclustered_nose.push_back(classPolitician);
+				}
+			}
+
+		}
+		if (counter > 0 ){
+			eyes_training_set.insert(pair<int,Mat>(index,eyes_samples)) ;
+			mouth_training_set.insert(pair<int,Mat>(index,mouth_samples)) ;
+			nose_training_set.insert(pair<int,Mat>(index,nose_samples)) ;
+			names.insert(pair<int,string>(index,celebrityName)) ;
+			index ++ ;
+		}
+		classPolitician++;
+	}
+
+	cout << "features extracted" << endl ;
+
+	cout << " Dictionnaire OK" << endl ;
+	
+	if(pca){
+		cout << endl;
+		cout << "Show PCA for eyes " << endl ;
+		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
+		cout << "Show PCA for mouth " << endl ;
+		showPCA(mouthFeaturesUnclustered,classesUnclustered_mouth,"Mouth");
+		cout << "Show PCA for nose " << endl ;
+		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
+	}
+
+	Mat eyes_reducer = computePCA(eyesFeaturesUnclustered,nb_coponents);
+	Mat mouth_reducer = computePCA(mouthFeaturesUnclustered,nb_coponents);
+	Mat nose_reducer = computePCA(noseFeaturesUnclustered,nb_coponents);
+	cout << "Size reducers " << eyes_reducer.size() << " " << mouth_reducer.size() << " " << nose_reducer.size() << endl ;
+	
+	map<int,Mat> training_set ;
+	for(int k=0;k<index;k++){
+		Mat samples(1,3*nb_coponents,CV_32FC1);
+		//cout << "size : " << eyes_training_set[k].size() << endl ;
+		//cout << "size mouth : " << mouth_training_set[k].size() << " " << nose_training_set[k].size() << endl ;
+		Mat reduced_eyes = eyes_training_set[k] * eyes_reducer ;
+		Mat reduced_mouth = mouth_training_set[k] * mouth_reducer ;
+		Mat reduced_nose = nose_training_set[k] * nose_reducer ;
+		/*cout << "eyes : " << endl ;
+		cout << reduced_eyes << endl << endl ;
+		cout << "mouth : " << endl ;
+		cout << reduced_mouth << endl << endl ;
+		cout << "nose : " << endl ;
+		cout << reduced_nose << endl << endl ;
+		*/
+		vector<Mat> matrices ;
+		matrices.push_back(reduced_eyes) ;
+		matrices.push_back(reduced_mouth) ;
+		matrices.push_back(reduced_nose) ;
+		hconcat( matrices,samples);
+		training_set.insert(pair<int,Mat>(k,samples)) ;
+		cout << samples << endl << endl ;
+	}
+
+	CvSVMParams params = chooseSVMParams() ;
+	vector<CvParamGrid> grids = chooseSVMGrids() ;
+	int k_fold = 2 ;
+
+	Mat labels,temp ;
+	string fname ;
+
+	for (int x=0;x<index;x++){
+		Mat samples(0,3*nb_coponents,CV_32FC1) ;
+		counter = 0 ;
+		for(int y=0;y<index;y++){
+			if(y != x){
+				samples.push_back(training_set[y]) ;
+				counter += training_set[y].rows ;
+			}
+		}
+		samples.push_back(training_set[x]) ;
+		labels = Mat::zeros(counter,1,CV_32FC1) ;
+		temp = Mat::ones(training_set[x].rows,1,CV_32FC1) ;
+		labels.push_back(temp);
+
+		CvSVM classifier ;
+		Mat samples_32f ;
+		samples.convertTo(samples_32f, CV_32F);
+		if(samples.rows != 0){ 
+			classifier.train(samples_32f,labels,Mat(),Mat(),params);
+			//classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
+		}
+		else
+			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
+
+		fname = "../classifiers/" + names[x] + ".yml";
+		cout << "Store : " << fname << endl ;
+		classifier.save(fname.c_str()) ;
+		cout << "Stored" << endl ;
+	}
+	
+	
+	cout << "Classifieurs crees" << endl ;
+	
+	vector<Mat> reducers ;
+	reducers.push_back(eyes_reducer) ;
+	reducers.push_back(mouth_reducer);
+	reducers.push_back(nose_reducer) ;
+
+	return reducers ;
+}
+
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title){
 	cout << "Nbr classes : " << featuresUnclustered.rows << endl ;
 	int num_components = 10;
@@ -387,6 +591,18 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
 	}
 }
 
+Mat computePCA(Mat featuresUnclustered,int nb_coponents){
+    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+    Mat eigenvectors = principalCA.eigenvectors.clone();
+	Mat principalVectors = Mat(nb_coponents , eigenvectors.cols,CV_32FC1);
+
+    for(int j=0;j<nb_coponents;j++){
+		principalVectors.row(j) = eigenvectors.row(j) ;
+	}
+
+	return principalVectors.t() ;
+}
+
 int init_bowDE(BOWImgDescriptorExtractor& mouth_bowDE,BOWImgDescriptorExtractor& eyes_bowDE,BOWImgDescriptorExtractor& nose_bowDE){
 	//prepare BOW descriptor extractor from the dictionary
 	Mat eyes_dictionary;
@@ -413,6 +629,9 @@ int init_bowDE(BOWImgDescriptorExtractor& mouth_bowDE,BOWImgDescriptorExtractor&
 	return dim ;
 }
 
+
+
+//after clustering
 int createSVMClassifier(void) {
 	CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
@@ -663,7 +882,6 @@ void predict(void){
 	}
 
 	cout << "Classifieurs charges" << endl ;
-	waitKey() ;
 
 	 //prepare BOW descriptor extractor from the dictionary
 	Mat eyes_dictionary;
@@ -830,6 +1048,244 @@ void predict(void){
 				}
 				cout << endl ;
 			}
+		}
+	}
+
+}
+
+
+void predictPCA(vector<Mat> reducers){
+	
+	Mat reducer_eyes = reducers[0] ;
+	Mat reducer_mouth = reducers[1] ;
+	Mat reducer_nose = reducers[2] ;
+
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
+	CvSVM classifiers[3] ;
+	String celebrities[3] ;
+	int index = 0 ;
+	for (directory_iterator it("../classifiers"); it != directory_iterator() ; it++) { 
+		path p = it->path() ;
+		if(is_regular_file(it->status())){
+			classifiers[index].load(p.string().c_str()) ;
+			celebrities[index] = p.stem().string() ;
+			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
+			index ++ ;
+		}
+	}
+
+	cout << "Classifieurs charges" << endl ;
+
+	 //prepare BOW descriptor extractor from the dictionary
+	Mat eyes_dictionary;
+	Mat nose_dictionary; 
+	Mat mouth_dictionary; 
+    FileStorage fs1("../data/mouth_dictionary.yml", FileStorage::READ);
+    fs1["vocabulary"] >> mouth_dictionary;
+    fs1.release();
+	FileStorage fs2("../data/nose_dictionary.yml", FileStorage::READ);
+    fs2["vocabulary"] >> nose_dictionary;
+    fs2.release();
+	FileStorage fs3("../data/eye_dictionary.yml", FileStorage::READ);
+    fs3["vocabulary"] >> eyes_dictionary;
+    fs3.release();
+    cout << "dictionary loaded" << endl ;
+
+    //create a nearest neighbor matcher
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher) ;
+	//The SIFT feature extractor and descriptor
+	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ; 
+	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ; 
+
+    //create BoF (or BoW) descriptor extractor
+    BOWImgDescriptorExtractor mouth_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor nose_bowDE(extractor,matcher);
+    BOWImgDescriptorExtractor eyes_bowDE(extractor,matcher);
+	//Set the dictionary with the vocabulary we created in the first step
+    mouth_bowDE.setVocabulary(mouth_dictionary);
+    nose_bowDE.setVocabulary(nose_dictionary);
+    eyes_bowDE.setVocabulary(eyes_dictionary);
+
+	Mat input ;
+    vector<KeyPoint> keypoints;  
+    Mat mouth_bowDescriptor,eyes_bowDescriptor,nose_bowDescriptor;
+	string filename;
+	string celebrityName ;
+
+	for (directory_iterator it1("../data/unlabeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		celebrityName = p.filename().string() ;
+		cout << " -- Traite : " << celebrityName << endl ;	
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+                // Loading file
+                Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha =0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() != 0){
+					cout << "eyes ok" << endl ;
+					Mat descriptorEyes ;
+                    extractor->compute(input, keypoints_eyes,descriptorEyes);
+					for (int k=0;k<128;k++){
+						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					}
+				}
+				Mat descriptorMouth ;
+				if(keypoints_mouth.size() != 0){
+					cout << "mouth ok" << endl ;
+					extractor->compute(input, keypoints_mouth,descriptorMouth);
+				}
+				else
+					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
+				Mat descriptorNose ;
+				if(keypoints_nose.size() != 0){
+					cout << "nose ok " << endl ;
+					extractor->compute(input, keypoints_nose,descriptorNose);
+				}
+				else
+					descriptorNose = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+					//cout << "sizes " << reducer_eyes.size() << " " << avg_descriptorEyes.size() << endl ;
+					Mat eyes_samples = avg_descriptorEyes * reducer_eyes;
+					Mat mouth_samples = descriptorMouth * reducer_mouth;
+					Mat nose_samples = descriptorNose * reducer_nose ;
+					vector<Mat> matrices ; 
+					matrices.push_back(eyes_samples) ;
+					matrices.push_back(mouth_samples) ;
+					matrices.push_back(nose_samples) ;
+					cout << eyes_samples.size() << endl ;
+					Mat full_descriptor = Mat (1,3*eyes_samples.cols,CV_32FC1) ;
+					hconcat(matrices,full_descriptor) ;
+					//cout << "size full descriptor : " << full_descriptor.size() << endl ;
+					
+					float min = 2  ;
+					int prediction =0 ;
+					for(int x=0;x<3;x++){
+						if (classifiers[x].predict(full_descriptor,true) < min){
+							prediction = x ;
+							min = classifiers[x].predict(full_descriptor,true) ;
+						}
+						cout << classifiers[x].predict(full_descriptor,true) << " " ;
+					}
+					cout <<endl ;
+					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+				}
+				else{
+					cout << "No keypoints found" << endl ;
+				}
+				cout << endl ;
+			}
+
+		}
+	}
+	
+	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		celebrityName = p.filename().string() ;
+		cout << " -- Traite : " << celebrityName << endl ;	
+		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+                // Loading file
+                Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
+				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Rect searchZone ;
+				vector<KeyPoint> keypoints_mouth ;
+				vector<KeyPoint> keypoints_nose ;
+				float alpha =0 ;
+				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				if(faces.size() >= 1){
+					if(faces.size() > 1)
+						cout << "Attention : plus d'un visage detecte" << endl ;
+					searchZone = faces[0] ;
+					Rect searchMouthZone = faces[0] ;
+					searchMouthZone.height /= 2 ;
+					searchMouthZone.y += searchMouthZone.height ;
+					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ; 
+				}
+				else{
+					cout << "Attention : pas de visage detecte" << endl ;
+				}
+				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() != 0){
+					cout << "eyes ok" << endl ;
+					Mat descriptorEyes ;
+                    extractor->compute(input, keypoints_eyes,descriptorEyes);
+					for (int k=0;k<128;k++){
+						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					}
+				}
+				Mat descriptorMouth ;
+				if(keypoints_mouth.size() != 0){
+					cout << "mouth ok" << endl ;
+					extractor->compute(input, keypoints_mouth,descriptorMouth);
+				}
+				else
+					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
+				Mat descriptorNose ;
+				if(keypoints_nose.size() != 0){
+					cout << "nose ok " << endl ;
+					extractor->compute(input, keypoints_nose,descriptorNose);
+				}
+				else
+					descriptorNose = Mat::zeros(1,128,CV_32FC1);
+				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+					//cout << "sizes " << reducer_eyes.size() << " " << avg_descriptorEyes.size() << endl ;
+					Mat eyes_samples = avg_descriptorEyes * reducer_eyes;
+					Mat mouth_samples = descriptorMouth * reducer_mouth;
+					Mat nose_samples = descriptorNose * reducer_nose ;
+					vector<Mat> matrices ; 
+					matrices.push_back(eyes_samples) ;
+					matrices.push_back(mouth_samples) ;
+					matrices.push_back(nose_samples) ;
+					cout << eyes_samples.size() << endl ;
+					Mat full_descriptor = Mat (1,3*eyes_samples.cols,CV_32FC1) ;
+					hconcat(matrices,full_descriptor) ;
+					//cout << "size full descriptor : " << full_descriptor.size() << endl ;
+					
+					float min = 2  ;
+					int prediction =0 ;
+					for(int x=0;x<3;x++){
+						if (classifiers[x].predict(full_descriptor,true) < min){
+							prediction = x ;
+							min = classifiers[x].predict(full_descriptor,true) ;
+						}
+						cout << classifiers[x].predict(full_descriptor,true) << " " ;
+					}
+					cout <<endl ;
+					cout << "Classe retenue : " << prediction << " = " << celebrities[prediction] << endl ;
+				}
+				else{
+					cout << "No keypoints found" << endl ;
+				}
+				cout << endl ;
+			}
+
 		}
 	}
 

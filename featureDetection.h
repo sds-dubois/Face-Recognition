@@ -13,9 +13,13 @@ using namespace std;
 using namespace cv ;
 
 void buildSiftDictionary(int i,bool verbose) ;
+vector<Mat> buildPCAreducer(int nb_coponents,bool verbose) ;
+
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
+Mat computePCA(Mat features,int nb_coponents) ;
 CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 int createSVMClassifier(void) ;
 map<int,CvSVM*> loadSVMClassifier(void) ;
 void predict(void) ;
+void predictPCA(vector<Mat> reducers) ;

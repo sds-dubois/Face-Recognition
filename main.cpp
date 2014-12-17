@@ -29,11 +29,12 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	//buildSiftDictionary(21,false) ;
+	//buildSiftDictionary(40,false) ;
+	vector<Mat> reducers = buildPCAreducer(5,false) ;
 
-	createSVMClassifier() ;
+	//createSVMClassifier() ;
 
-	//predict() ;
+	predictPCA(reducers) ;
 
 	return 0 ;
 }
