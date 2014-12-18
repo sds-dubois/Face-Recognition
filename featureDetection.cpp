@@ -322,14 +322,16 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	initModule_nonfree() ;
 
 	//To store the SIFT descriptor of current image
-	Mat descriptorEyes;
+	Mat descriptorLEye;
+	Mat descriptorREye;
 	Mat descriptorMouth;
 	Mat descriptorNose;
 	//To store all the descriptors that are extracted from all the images.
-	Mat eyesFeaturesUnclustered;
+	Mat leyeFeaturesUnclustered;
+	Mat reyeFeaturesUnclustered;
 	Mat mouthFeaturesUnclustered;
 	Mat noseFeaturesUnclustered;
-	vector<int> classesUnclustered_eyes;
+	vector<int> classesUnclustered_eye;
 	vector<int> classesUnclustered_mouth;
 	vector<int> classesUnclustered_nose;
 	//The SIFT feature extractor and descriptor
@@ -337,7 +339,7 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 	Mat img_with_sift;
 
-	map<int,Mat> eyes_training_set,mouth_training_set,nose_training_set ;
+	map<int,Mat> leye_training_set,reye_training_set,mouth_training_set,nose_training_set ;
 	map<int,string> names ;
 	int counter ;
 	int index = 0 ;
@@ -351,7 +353,8 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
-		Mat eyes_samples = Mat(0,128,CV_32FC1);
+		Mat leye_samples = Mat(0,128,CV_32FC1);
+		Mat reye_samples = Mat(0,128,CV_32FC1);
 		Mat mouth_samples = Mat(0,128,CV_32FC1);
 		Mat nose_samples = Mat(0,128,CV_32FC1);		
 		counter = 0 ;
@@ -380,15 +383,29 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
 				if(keypoints_eyes.size() != 0){
+					if(keypoints_eyes.size() != 2)
+						cout << "ERROR nb d oeil retourne != 2" << endl ;
+					int x1 = keypoints_eyes[0].pt.x ;
+					int x2 = keypoints_eyes[1].pt.x ;
 					cout << "eyes ok" << endl ;
+					Mat descriptorEyes ;
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
-					for (int k=0;k<128;k++){
-						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					if(x1 < x2){
+						descriptorLEye = descriptorEyes.row(0) ;
+						descriptorREye = descriptorEyes.row(1) ;
 					}
-					eyesFeaturesUnclustered.push_back(avg_descriptorEyes);
-					classesUnclustered_eyes.push_back(classPolitician);
+					else{
+						descriptorLEye = descriptorEyes.row(1) ;
+						descriptorREye = descriptorEyes.row(0) ;
+					}
+					leyeFeaturesUnclustered.push_back(descriptorLEye);
+					reyeFeaturesUnclustered.push_back(descriptorREye);
+					classesUnclustered_eye.push_back(classPolitician);
+				}
+				else{
+					descriptorLEye = Mat::zeros(1,128,CV_32FC1);
+					descriptorREye = Mat::zeros(1,128,CV_32FC1);
 				}
 				if(keypoints_mouth.size() != 0){
 					cout << "mouth ok" << endl ;
@@ -409,7 +426,8 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
 					counter ++ ;
 					classes.push_back(index);
-					eyes_samples.push_back(avg_descriptorEyes);
+					leye_samples.push_back(descriptorLEye);
+					reye_samples.push_back(descriptorREye);
 					mouth_samples.push_back(descriptorMouth);
 					nose_samples.push_back(descriptorNose);
 				}
@@ -417,7 +435,8 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 
 		}
 		if (counter > 0 ){
-			eyes_training_set.insert(pair<int,Mat>(index,eyes_samples)) ;
+			leye_training_set.insert(pair<int,Mat>(index,leye_samples)) ;
+			reye_training_set.insert(pair<int,Mat>(index,reye_samples)) ;
 			mouth_training_set.insert(pair<int,Mat>(index,mouth_samples)) ;
 			nose_training_set.insert(pair<int,Mat>(index,nose_samples)) ;
 			names.insert(pair<int,string>(index,celebrityName)) ;
@@ -432,36 +451,42 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	
 	if(pca){
 		cout << endl;
-		cout << "Show PCA for eyes " << endl ;
-		showPCA(eyesFeaturesUnclustered,classesUnclustered_eyes,"Eyes");
+		cout << "Show PCA for left eyes " << endl ;
+		showPCA(leyeFeaturesUnclustered,classesUnclustered_eye,"Left Eye");
+		cout << "Show PCA for right eyes " << endl ;
+		showPCA(reyeFeaturesUnclustered,classesUnclustered_eye,"Right Eye");
 		cout << "Show PCA for mouth " << endl ;
 		showPCA(mouthFeaturesUnclustered,classesUnclustered_mouth,"Mouth");
 		cout << "Show PCA for nose " << endl ;
 		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
 	}
 
-	Mat eyes_reducer = computePCA(eyesFeaturesUnclustered,nb_coponents);
+	Mat leye_reducer = computePCA(leyeFeaturesUnclustered,nb_coponents);
+	Mat reye_reducer = computePCA(reyeFeaturesUnclustered,nb_coponents);
 	Mat mouth_reducer = computePCA(mouthFeaturesUnclustered,nb_coponents);
 	Mat nose_reducer = computePCA(noseFeaturesUnclustered,nb_coponents);
-	cout << "Size reducers " << eyes_reducer.size() << " " << mouth_reducer.size() << " " << nose_reducer.size() << endl ;
+	cout << "Size reducers " << leye_reducer.size() << " " << mouth_reducer.size() << " " << nose_reducer.size() << endl ;
 	
 	map<int,Mat> training_set ;
 	for(int k=0;k<index;k++){
-		Mat samples(1,3*nb_coponents,CV_32FC1);
+		Mat samples(1,4*nb_coponents,CV_32FC1);
 		//cout << "size : " << eyes_training_set[k].size() << endl ;
 		//cout << "size mouth : " << mouth_training_set[k].size() << " " << nose_training_set[k].size() << endl ;
-		Mat reduced_eyes = eyes_training_set[k] * eyes_reducer ;
+		Mat reduced_leye = leye_training_set[k] * leye_reducer ;
+		Mat reduced_reye = reye_training_set[k] * reye_reducer ;
 		Mat reduced_mouth = mouth_training_set[k] * mouth_reducer ;
 		Mat reduced_nose = nose_training_set[k] * nose_reducer ;
-		/*cout << "eyes : " << endl ;
-		cout << reduced_eyes << endl << endl ;
-		cout << "mouth : " << endl ;
+		cout << "left eyes : " << endl ;
+		cout << reduced_leye << endl << endl ;
+		cout << "right eyes : " << endl ;
+		cout << reduced_reye << endl << endl ;		cout << "mouth : " << endl ;
 		cout << reduced_mouth << endl << endl ;
 		cout << "nose : " << endl ;
 		cout << reduced_nose << endl << endl ;
-		*/
+		
 		vector<Mat> matrices ;
-		matrices.push_back(reduced_eyes) ;
+		matrices.push_back(reduced_leye) ;
+		matrices.push_back(reduced_reye) ;
 		matrices.push_back(reduced_mouth) ;
 		matrices.push_back(reduced_nose) ;
 		hconcat( matrices,samples);
@@ -510,8 +535,11 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	cout << "Classifieurs crees" << endl ;
 	
 
-	FileStorage fs1("../data/eyes_reducer.yml", FileStorage::WRITE);
-	fs1 << "reducer" << eyes_reducer;
+	FileStorage fs0("../data/leye_reducer.yml", FileStorage::WRITE);
+	fs0 << "reducer" << leye_reducer;
+	fs0.release();
+	FileStorage fs1("../data/reye_reducer.yml", FileStorage::WRITE);
+	fs1 << "reducer" << reye_reducer;
 	fs1.release();
 	FileStorage fs2("../data/mouth_reducer.yml", FileStorage::WRITE);
 	fs2 << "reducer" << mouth_reducer;
@@ -521,7 +549,8 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	fs3.release();
 
 	vector<Mat> reducers ;
-	reducers.push_back(eyes_reducer) ;
+	reducers.push_back(leye_reducer) ;
+	reducers.push_back(reye_reducer) ;
 	reducers.push_back(mouth_reducer);
 	reducers.push_back(nose_reducer) ;
 
@@ -1090,9 +1119,12 @@ void predictPCA(vector<Mat> reducers){
 	cout << "Classifieurs charges" << endl ;
 
 	/*
-	Mat reducer_eyes,reducer_mouth,reducer_nose ;
-	Mat r1,r2,r3 ;
-	FileStorage fs1("../data/eyes_reducer.yml", FileStorage::READ);
+	Mat reducer_leye,reducer_reye,reducer_mouth,reducer_nose ;
+	Mat r0,r1,r2,r3 ;
+	FileStorage fs0("../data/leye_reducer.yml", FileStorage::READ);
+	fs0["reducer"] >> r0;
+	fs0.release();
+	FileStorage fs1("../data/reye_reducer.yml", FileStorage::READ);
 	fs1["reducer"] >> r1;
 	fs1.release();
 	FileStorage fs2("../data/mouth_reducer.yml", FileStorage::READ);
@@ -1102,14 +1134,16 @@ void predictPCA(vector<Mat> reducers){
 	fs3["reducer"] >> r3;
 	fs3.release();
 
-	r1.convertTo(reducer_eyes,CV_32FC1);
+	r0.convertTo(reducer_leye,CV_32FC1);
+	r1.convertTo(reducer_reye,CV_32FC1);
 	r2.convertTo(reducer_mouth,CV_32FC1);
 	r3.convertTo(reducer_nose,CV_32FC1);
 	*/
-	Mat reducer_eyes = reducers[0] ;
-	Mat reducer_mouth = reducers[1] ;
-	Mat reducer_nose = reducers[2] ;
-	cout << reducer_eyes.size()  << " " << reducer_mouth.size() << " " << reducer_nose.size() << endl ;
+	Mat reducer_leye = reducers[0] ;
+	Mat reducer_reye = reducers[1] ;
+	Mat reducer_mouth = reducers[2] ;
+	Mat reducer_nose = reducers[3] ;
+	cout << reducer_leye.size()  << " " << reducer_reye.size()  << " "<< reducer_mouth.size() << " " << reducer_nose.size() << endl ;
 	cout << "Reducers loaded" << endl ;
 
 	//The SIFT feature extractor and descriptor
@@ -1155,14 +1189,27 @@ void predictPCA(vector<Mat> reducers){
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
+				Mat descriptorLEye, descriptorREye;
 				if(keypoints_eyes.size() != 0){
+					if(keypoints_eyes.size() != 2)
+						cout << "ERROR nb d oeil retourne != 2" << endl ;
+					int x1 = keypoints_eyes[0].pt.x ;
+					int x2 = keypoints_eyes[1].pt.x ;
 					cout << "eyes ok" << endl ;
 					Mat descriptorEyes ;
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
-					for (int k=0;k<128;k++){
-						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					if(x1 < x2){
+						descriptorLEye = descriptorEyes.row(0) ;
+						descriptorREye = descriptorEyes.row(1) ;
 					}
+					else{
+						descriptorLEye = descriptorEyes.row(1) ;
+						descriptorREye = descriptorEyes.row(0) ;
+					}
+				}
+				else{
+					descriptorLEye = Mat::zeros(1,128,CV_32FC1);
+					descriptorREye = Mat::zeros(1,128,CV_32FC1);
 				}
 				Mat descriptorMouth ;
 				if(keypoints_mouth.size() != 0){
@@ -1179,16 +1226,18 @@ void predictPCA(vector<Mat> reducers){
 				else
 					descriptorNose = Mat::zeros(1,128,CV_32FC1);
 				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
-					cout << "sizes " << reducer_eyes.size() << " " << avg_descriptorEyes.size() << endl ;
-					Mat eyes_samples = avg_descriptorEyes * reducer_eyes;
+					cout << "sizes " << reducer_leye.size() << " " << descriptorLEye.size() << endl ;
+					Mat leye_samples = descriptorLEye * reducer_leye;
+					Mat reye_samples = descriptorREye * reducer_reye;
 					Mat mouth_samples = descriptorMouth * reducer_mouth;
 					Mat nose_samples = descriptorNose * reducer_nose ;
 					vector<Mat> matrices ; 
-					matrices.push_back(eyes_samples) ;
+					matrices.push_back(leye_samples) ;
+					matrices.push_back(reye_samples) ;
 					matrices.push_back(mouth_samples) ;
 					matrices.push_back(nose_samples) ;
-					cout << eyes_samples.size() << endl ;
-					Mat full_descriptor = Mat (1,3*eyes_samples.cols,CV_32FC1) ;
+					cout << leye_samples.size() << endl ;
+					Mat full_descriptor = Mat (1,4*leye_samples.cols,CV_32FC1) ;
 					hconcat(matrices,full_descriptor) ;
 					cout << "size full descriptor : " << full_descriptor.size() << endl ;
 					
@@ -1249,42 +1298,57 @@ void predictPCA(vector<Mat> reducers){
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
-				Mat avg_descriptorEyes = Mat::zeros(1,128,CV_32FC1);
+				Mat descriptorLEye, descriptorREye;
 				if(keypoints_eyes.size() != 0){
-					//cout << "eyes ok" << endl ;
+					if(keypoints_eyes.size() != 2)
+						cout << "ERROR nb d oeil retourne != 2" << endl ;
+					int x1 = keypoints_eyes[0].pt.x ;
+					int x2 = keypoints_eyes[1].pt.x ;
+					cout << "eyes ok" << endl ;
 					Mat descriptorEyes ;
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
-					for (int k=0;k<128;k++){
-						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
+					if(x1 < x2){
+						descriptorLEye = descriptorEyes.row(0) ;
+						descriptorREye = descriptorEyes.row(1) ;
 					}
+					else{
+						descriptorLEye = descriptorEyes.row(1) ;
+						descriptorREye = descriptorEyes.row(0) ;
+					}
+				}
+				else{
+					descriptorLEye = Mat::zeros(1,128,CV_32FC1);
+					descriptorREye = Mat::zeros(1,128,CV_32FC1);
 				}
 				Mat descriptorMouth ;
 				if(keypoints_mouth.size() != 0){
-					//cout << "mouth ok" << endl ;
+					cout << "mouth ok" << endl ;
 					extractor->compute(input, keypoints_mouth,descriptorMouth);
 				}
 				else
 					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
 				Mat descriptorNose ;
 				if(keypoints_nose.size() != 0){
-					//cout << "nose ok " << endl ;
+					cout << "nose ok " << endl ;
 					extractor->compute(input, keypoints_nose,descriptorNose);
 				}
 				else
 					descriptorNose = Mat::zeros(1,128,CV_32FC1);
 				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
-					//cout << "sizes " << reducer_eyes.size() << " " << avg_descriptorEyes.size() << endl ;
-					Mat eyes_samples = avg_descriptorEyes * reducer_eyes;
+					cout << "sizes " << reducer_leye.size() << " " << descriptorLEye.size() << endl ;
+					Mat leye_samples = descriptorLEye * reducer_leye;
+					Mat reye_samples = descriptorREye * reducer_reye;
 					Mat mouth_samples = descriptorMouth * reducer_mouth;
 					Mat nose_samples = descriptorNose * reducer_nose ;
 					vector<Mat> matrices ; 
-					matrices.push_back(eyes_samples) ;
+					matrices.push_back(leye_samples) ;
+					matrices.push_back(reye_samples) ;
 					matrices.push_back(mouth_samples) ;
 					matrices.push_back(nose_samples) ;
-					//cout << eyes_samples.size() << endl ;
-					Mat full_descriptor = Mat (1,3*eyes_samples.cols,CV_32FC1) ;
+					cout << leye_samples.size() << endl ;
+					Mat full_descriptor = Mat (1,4*leye_samples.cols,CV_32FC1) ;
 					hconcat(matrices,full_descriptor) ;
-					//cout << "size full descriptor : " << full_descriptor.size() << endl ;
+					cout << "size full descriptor : " << full_descriptor.size() << endl ;
 					
 					float min = 2  ;
 					int prediction =0 ;
