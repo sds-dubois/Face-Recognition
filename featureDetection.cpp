@@ -447,8 +447,6 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 
 	cout << "features extracted" << endl ;
 
-	cout << " Dictionnaire OK" << endl ;
-	
 	if(pca){
 		cout << endl;
 		cout << "Show PCA for left eyes " << endl ;
@@ -476,6 +474,7 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 		Mat reduced_reye = reye_training_set[k] * reye_reducer ;
 		Mat reduced_mouth = mouth_training_set[k] * mouth_reducer ;
 		Mat reduced_nose = nose_training_set[k] * nose_reducer ;
+		/*
 		cout << "left eyes : " << endl ;
 		cout << reduced_leye << endl << endl ;
 		cout << "right eyes : " << endl ;
@@ -483,7 +482,7 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 		cout << reduced_mouth << endl << endl ;
 		cout << "nose : " << endl ;
 		cout << reduced_nose << endl << endl ;
-		
+		*/
 		vector<Mat> matrices ;
 		matrices.push_back(reduced_leye) ;
 		matrices.push_back(reduced_reye) ;
@@ -519,8 +518,8 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 		Mat samples_32f ;
 		samples.convertTo(samples_32f, CV_32F);
 		if(samples.rows != 0){ 
-			classifier.train(samples_32f,labels,Mat(),Mat(),params);
-			//classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
+			//classifier.train(samples_32f,labels,Mat(),Mat(),params);
+			classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);		
 		}
 		else
 			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
