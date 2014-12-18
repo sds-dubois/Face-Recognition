@@ -384,15 +384,17 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 				if(keypoints_eyes.size() != 0){
 					cout << "eyes ok" << endl ;
                     extractor->compute(input, keypoints_eyes,descriptorEyes);
-					eyesFeaturesUnclustered.push_back(descriptorEyes);
 					for (int k=0;k<128;k++){
 						avg_descriptorEyes.at<float>(0,k) = (descriptorEyes.at<float>(0,k) + descriptorEyes.at<float>(1,k))/2 ;
 					}
+					eyesFeaturesUnclustered.push_back(avg_descriptorEyes);
+					classesUnclustered_eyes.push_back(classPolitician);
 				}
 				if(keypoints_mouth.size() != 0){
 					cout << "mouth ok" << endl ;
 					extractor->compute(input, keypoints_mouth,descriptorMouth);
 					mouthFeaturesUnclustered.push_back(descriptorMouth);
+					classesUnclustered_mouth.push_back(classPolitician);
 				}
 				else
 					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
@@ -400,6 +402,7 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 					cout << "nose ok " << endl ;
 					extractor->compute(input, keypoints_nose,descriptorNose);
 					noseFeaturesUnclustered.push_back(descriptorNose);
+					classesUnclustered_nose.push_back(classPolitician);
 				}
 				else
 					descriptorNose = Mat::zeros(1,128,CV_32FC1);
@@ -409,9 +412,6 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 					eyes_samples.push_back(avg_descriptorEyes);
 					mouth_samples.push_back(descriptorMouth);
 					nose_samples.push_back(descriptorNose);
-					classesUnclustered_eyes.push_back(classPolitician);
-					classesUnclustered_mouth.push_back(classPolitician);
-					classesUnclustered_nose.push_back(classPolitician);
 				}
 			}
 

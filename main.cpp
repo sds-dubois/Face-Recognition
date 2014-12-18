@@ -30,7 +30,7 @@ int main(int argc, char ** argv){
 		cin >> b;
 */    }
 	//buildSiftDictionary(40,false) ;
-	vector<Mat> reducers = buildPCAreducer(30,false) ;
+	vector<Mat> reducers = buildPCAreducer(20,false) ;
 
 	//createSVMClassifier() ;
 
