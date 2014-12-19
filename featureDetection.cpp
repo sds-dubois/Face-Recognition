@@ -24,6 +24,28 @@ bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 const bool pca=true;
 const int nb_celebrities = 3 ;
 
+void writeMatToFile(Mat& m, vector<int> classesUnclustered,const char* filename)
+{
+    ofstream fout(filename);
+
+    if(!fout)
+    {
+        cout<<"File Not Opened"<<endl;  return;
+    }
+
+    for(int i=0; i<m.rows; i++)
+    {
+		fout<<classesUnclustered[i] <<",";
+        for(int j=0; j<m.cols; j++)
+        {
+            fout<<m.at<float>(i,j)<<",";
+        }
+        fout<<endl;
+    }
+
+    fout.close();
+}
+
 vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose){
 	Mat reframedImg = input(searchZone);
 	Mat img_with_sift ;
@@ -447,6 +469,12 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 
 	cout << "features extracted" << endl ;
 
+	//Store features matrices
+	writeMatToFile(leyeFeaturesUnclustered,classesUnclustered_eye,"../viz/leye_features.csv") ;
+	writeMatToFile(reyeFeaturesUnclustered,classesUnclustered_eye,"../viz/reye_features.csv") ;
+	writeMatToFile(mouthFeaturesUnclustered,classesUnclustered_mouth,"../viz/mouth_features.csv") ;
+	writeMatToFile(noseFeaturesUnclustered,classesUnclustered_nose,"../viz/nose_features.csv") ;
+
 	if(pca){
 		cout << endl;
 		cout << "Show PCA for left eyes " << endl ;
@@ -546,6 +574,21 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 	FileStorage fs3("../data/nose_reducer.yml", FileStorage::WRITE);
 	fs3 << "reducer" << nose_reducer;
 	fs3.release();
+
+
+	/*
+	FileStorage fs4("../data/leye_features.csv", FileStorage::WRITE);
+	fs4 << "features" << leyeFeaturesUnclustered;
+	fs4.release();
+	FileStorage fs5("../data/reye_features.csv", FileStorage::WRITE);
+	fs5 << "features" << reyeFeaturesUnclustered;
+	fs5.release();
+	FileStorage fs6("../data/mouth_features.csv", FileStorage::WRITE);
+	fs6 << "features" << mouthFeaturesUnclustered;
+	fs6.release();
+	FileStorage fs7("../data/nose_features.csv", FileStorage::WRITE);
+	fs7 << "features" << noseFeaturesUnclustered;
+	fs7.release(); */
 
 	vector<Mat> reducers ;
 	reducers.push_back(leye_reducer) ;
