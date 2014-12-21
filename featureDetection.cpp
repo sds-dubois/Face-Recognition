@@ -21,7 +21,7 @@ using namespace cv;
 using namespace boost::filesystem ;
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
-const bool pca=true;
+const bool pca=false;
 const int nb_celebrities = 3 ;
 
 void writeMatToFile(Mat& m, vector<int> classesUnclustered,const char* filename)
@@ -61,8 +61,8 @@ vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mo
 		Rect mouthZone = mouths[0] ;
 		mouthZone.x += searchZone.x ;
 		mouthZone.y += searchZone.y ;
-		Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-		mask(mouthZone) = 1;
+		//Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+		//mask(mouthZone) = 1;
 		if(verbose)
 			rectangle(img_with_sift,mouthZone,Scalar(0,255,0),1,8,0) ;
 		//compute the descriptors for each keypoint and put it in a single Mat object
@@ -95,8 +95,8 @@ vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nos
 		Rect nose = noses[0] ;
 		nose.x += searchZone.x ;
 		nose.y += searchZone.y ;
-		Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-		mask(nose) = 1;
+		//Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
+		//mask(nose) = 1;
 		if(verbose)
 			rectangle(img_with_sift,nose,Scalar(0,255,0),1,8,0) ;
 		//compute the descriptors for each keypoint and put it in a single Mat object
@@ -162,34 +162,34 @@ vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<
 	return keypoints_best ;
 }
 
-vector<KeyPoint> getSiftOnEyes2(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector, float& alpha,bool verbose){
+vector<KeyPoint> getSiftOnEyes2(Mat input,Rect searchZone,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector, float& alpha,bool verbose){
+	Mat reframedImg = input(searchZone);
 	Mat img_with_sift ;
 	vector<KeyPoint> keypoints_best ;
     // Generating mask for face on the image
-    vector<Rect> eyes = detectEye(eyes_classifier, input); 
+    vector<Rect> eyes = detectEye(eyes_classifier, reframedImg); 
 	if(eyes.size() >= 2){
 		if(eyes.size() >2)
 			cout << "Attention : plus de deux yeux trouvees" << endl;
-		Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
-		for (int k=0;k<2;k++){
-			mask(eyes[k]) = 1;
-			if(verbose){
-				rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
-				cout << eyes[k].size() << endl ;
-			}
+		Rect eyeZone1 = eyes[0] ;
+		eyeZone1.x += searchZone.x ;
+		eyeZone1.y += searchZone.y ;
+		Rect eyeZone2 = eyes[1] ;
+		eyeZone2.x += searchZone.x ;
+		eyeZone2.y += searchZone.y ;
+		if(verbose){
+			rectangle(img_with_sift,eyeZone1,Scalar(0,255,0),1,8,0) ;
+			rectangle(img_with_sift,eyeZone2,Scalar(0,255,0),1,8,0) ;
 		}
-		Point_<float> c1 = Point_<float>(eyes[0].x+0.5*eyes[0].size().width,eyes[0].y+0.5*eyes[0].size().height);
-		Point_<float> c2 = Point_<float>(eyes[1].x+0.5*eyes[1].size().width,eyes[1].y+0.5*eyes[1].size().height);
+		Point_<float> c1 = Point_<float>(eyeZone1.x+0.5*eyeZone1.size().width,eyeZone1.y+0.5*eyeZone1.size().height);
+		Point_<float> c2 = Point_<float>(eyeZone2.x+0.5*eyeZone2.size().width,eyeZone2.y+0.5*eyeZone2.size().height);
 		alpha = (atan((c1.y-c2.y)/(c1.x-c2.x)))*180/3 ;
 		if(verbose)
 			cout << "Alpha = " << alpha << endl ;
-		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(eyes[0].size().width+eyes[0].size().height),alpha));
-		keypoints_best.push_back(KeyPoint(c2.x,c2.y,0.5*(eyes[1].size().width+eyes[1].size().height),alpha));		
+		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(eyeZone1.size().width+eyeZone1.size().height),alpha));
+		keypoints_best.push_back(KeyPoint(c2.x,c2.y,0.5*(eyeZone2.size().width+eyeZone2.size().height),alpha));		
 		if(verbose){
 			drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
-			for (int k=0;k<2;k++){
-				rectangle(img_with_sift,eyes[k],Scalar(0,255,0),1,8,0) ;
-			}
 			imshow("Keypoints",img_with_sift) ;
 			waitKey() ;
 		}
@@ -225,7 +225,7 @@ void buildSiftDictionary(int i,bool verbose){
 
 	//Images to extract feature descriptors and build the vocabulary
 	int classPolitician=1;
-	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+	for (directory_iterator it1("../data/yale_face_db/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		cout << "Folder " << p.string() << endl ;
 		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
@@ -239,11 +239,14 @@ void buildSiftDictionary(int i,bool verbose){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha =0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,verbose);
+				vector<KeyPoint> keypoints_eyes ;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,verbose);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -371,7 +374,7 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 
 	//Images to extract feature descriptors and build the vocabulary
 	int classPolitician=1;
-	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+	for (directory_iterator it1("../data/yale_face_db/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;
@@ -391,11 +394,14 @@ vector<Mat> buildPCAreducer(int nb_coponents,bool verbose){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha =0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,verbose);
+				vector<KeyPoint> keypoints_eyes;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,verbose);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -768,11 +774,14 @@ int createSVMClassifier(void) {
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha = 0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				vector<KeyPoint> keypoints_eyes ;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,false);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -1016,11 +1025,14 @@ void predict(void){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha = 0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);				
+				vector<KeyPoint> keypoints_eyes ;				
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,false);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -1083,11 +1095,14 @@ void predict(void){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha = 0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				vector<KeyPoint> keypoints_eyes ;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,false);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -1199,7 +1214,7 @@ void predictPCA(vector<Mat> reducers){
 	map<string,pair<int,int>> resOnUnlabeled ;
 	map<string,pair<int,int>> resOnLabeled ;
 
-	for (directory_iterator it1("../data/unlabeled"); it1 != directory_iterator() ; it1++){
+	for (directory_iterator it1("../data/yale_face_db/unlabeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;	
@@ -1217,11 +1232,14 @@ void predictPCA(vector<Mat> reducers){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha =0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				vector<KeyPoint> keypoints_eyes;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,false);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
@@ -1308,7 +1326,7 @@ void predictPCA(vector<Mat> reducers){
 		resOnUnlabeled.insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
 	}
 	
-	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+	for (directory_iterator it1("../data/yale_face_db/labeled"); it1 != directory_iterator() ; it1++){
 		path p = it1->path() ;
 		celebrityName = p.filename().string() ;
 		cout << " -- Traite : " << celebrityName << endl ;	
@@ -1326,11 +1344,14 @@ void predictPCA(vector<Mat> reducers){
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
 				float alpha =0 ;
-				vector<KeyPoint> keypoints_eyes = getSiftOnEyes2(input,eyes_classifier,detector,alpha,false);
+				vector<KeyPoint> keypoints_eyes ;
 				if(faces.size() >= 1){
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					Rect searchEyeZone = faces[0] ;
+					searchEyeZone.height /= 2 ;
+					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,false);
 					Rect searchMouthZone = faces[0] ;
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;

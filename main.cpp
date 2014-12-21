@@ -29,7 +29,6 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	//buildSiftDictionary(40,false) ;
 	vector<Mat> reducers = buildPCAreducer(20,false) ;
 
 	//createSVMClassifier() ;

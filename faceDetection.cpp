@@ -102,16 +102,21 @@ void showAllFaces(void){
 	}
 }
 
-void showAllEyes(void){
-	for (directory_iterator it1("../data/labeled"); it1 != directory_iterator() ; it1++){
+void showAllEyes(bool verbose){
+	int tot = 0 ;
+	int good = 0 ;
+	for (directory_iterator it1("../data/yale_face_db/labeled"); it1 != directory_iterator() && tot <200 ; it1++){
 		path p = it1->path() ;
-		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+		for(directory_iterator it2(p); it2 != directory_iterator() && tot < 200 ; it2 ++){
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
-				showEyes(p2.string()) ;
+				tot ++ ;
+				if(showEyes(p2.string(),verbose))
+					good ++;
 			}
 		}
 	}
+	cout << "Résultat : " << good << " / " << tot << endl ;
 }
 
 CascadeClassifier getEyeLeftCascadeClassifier()
@@ -132,7 +137,7 @@ CascadeClassifier getEyeRightCascadeClassifier()
 
 CascadeClassifier getEyesCascadeClassifier()
 {
-    String eye_cascade_name = "../lib/haarcascade_eye_tree_eyeglasses.xml";
+    String eye_cascade_name = "../lib/haarcascade_eye.xml";
     CascadeClassifier eye_cascade;
     eye_cascade.load(eye_cascade_name);
     return eye_cascade;
@@ -145,7 +150,7 @@ vector<Rect> detectEye(CascadeClassifier eye_classifier, Mat frame )
     equalizeHist( frame_gray, frame_gray );
 
     //-- Detect faces
-    eye_classifier.detectMultiScale(frame_gray, eyes, 1.1, 3, 0,Size(30,30));
+    eye_classifier.detectMultiScale(frame_gray, eyes, 1.1, 5, 0,Size(30,30));
 
     return eyes;
 }
@@ -166,26 +171,32 @@ void showLeftRightEyes(string filename){
 		rectangle(input,righteyes.front(),Scalar(0,0,255),1,8,0) ;
 	}
 	if(righteyes.size() == 0 && lefteyes.size() ==0)
-		cout << "Aucun oeils detecte" << endl ;
+		cout << "Aucun oeil detecte" << endl ;
 	imshow("eyes",input) ;
 	waitKey() ;
 }
 
-void showEyes(string filename){
+bool showEyes(string filename,bool verbose){
 	CascadeClassifier eye_classifier = getEyesCascadeClassifier();	
 	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-	
+	bool res = false ;
 	vector<Rect> eyes = detectEye(eye_classifier, input); 
 	if(eyes.size() != 0){
-		cout << "Nombre de paires d'oeils : " << eyes.size() << endl ;
-		for (int j=0;j<eyes.size();j++){
-			rectangle(input,eyes[j],Scalar(0,255,0),1,8,0) ;
+		cout << "Nombre d'oeils : " << eyes.size() << endl ;
+		if(eyes.size() > 1)
+			res = true ;
+		if(verbose){
+			for (int j=0;j<eyes.size();j++){
+				rectangle(input,eyes[j],Scalar(0,255,0),1,8,0) ;
+			}
+			imshow("eyes",input) ;
+			waitKey() ;
 		}
 	}
 	else
-		cout << "Aucun oeils detecte" << endl ;
-	imshow("eyes",input) ;
-	waitKey() ;
+		cout << "Aucun oeil detecte" << endl ;
+
+	return res ;
 }
 
 CascadeClassifier getMouthCascadeClassifier()
