@@ -29,11 +29,12 @@ int main(int argc, char ** argv){
 		cin >> j;
 		cin >> b;
 */    }
-	vector<Mat> reducers = buildPCAreducer(20,false) ;
+	String database = "yale_face_db" ;
+	buildPCAreducer(30,database,false) ;
 
 	//createSVMClassifier() ;
 
-	predictPCA(reducers) ;
+	predictPCA(database) ;
 
 	return 0 ;
 }
