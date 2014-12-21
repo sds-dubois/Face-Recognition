@@ -49,10 +49,10 @@ def evalMatrix(feature_name):
 
 
 	
-dist_leye,var_leye = evalMatrix('leye_features.csv')
-dist_reye,var_reye = evalMatrix('reye_features.csv')
-dist_mouth,var_mouth = evalMatrix('mouth_features.csv')
-dist_nose,var_nose = evalMatrix('nose_features.csv')
+dist_leye,var_leye = evalMatrix('../allFeatures/yale_face_db/leye_features.csv')
+dist_reye,var_reye = evalMatrix('../allFeatures/yale_face_db/reye_features.csv')
+dist_mouth,var_mouth = evalMatrix('../allFeatures/yale_face_db/mouth_features.csv')
+dist_nose,var_nose = evalMatrix('../allFeatures/yale_face_db/nose_features.csv')
 
 #print(dist_leye)
 abs = zeros((128,1))
