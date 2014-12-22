@@ -1,3 +1,4 @@
+import csv
 from numpy import *
 from numpy import genfromtxt
 import matplotlib.pyplot as plt
@@ -50,12 +51,13 @@ def show3D(data):
 	return newData3
 	
 def show(k,path,name):
+	f = open(name + '_selected_features.csv', 'wb')
 	my_data = genfromtxt(path, delimiter=',')
 	data = my_data[:,1:129]
 	dataBis = my_data[:,1:129]
 	target= my_data[:,0]
 	
-	num_feat = 20
+	num_feat = 60
 	print('Select ' + str(num_feat) + ' best features')
 
 	# For each feature we get its feature selection value (x^2 or IG)
@@ -69,6 +71,9 @@ def show(k,path,name):
 	data = kpca(10,data)
 	dataBis= kpca(10,dataBis)
 	
+	print(index2[:num_feat])
+	f = csv.writer(f,delimiter=',')
+	f.writerow(index2[:num_feat])
 	newData3 = show3D(data)
 	newDataBis3 = show3D(dataBis)
 	
@@ -101,9 +106,9 @@ def display_var(path):
 	return vars1,vars2
 	
 		
-	
-show(2,'../allFeatures/yale_face_db/leye_features.csv','left eye')
-show(3,'../allFeatures/yale_face_db/reye_features.csv','right eye')
+
+show(2,'../allFeatures/yale_face_db/leye_features.csv','left_eye')
+show(3,'../allFeatures/yale_face_db/reye_features.csv','right_eye')
 show(4,'../allFeatures/yale_face_db/mouth_features.csv','mouth')
 show(5,'../allFeatures/yale_face_db/nose_features.csv','nose')
 

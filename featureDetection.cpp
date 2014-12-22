@@ -22,6 +22,7 @@ using namespace boost::filesystem ;
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 const bool pca=false;
+const bool selectFeatures = true ;
 const int nb_celebrities = 3 ;
 
 void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename)
@@ -45,6 +46,26 @@ void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename)
 
     fout.close();
 }
+
+inline Mat selectCols(vector<int> goodCols,Mat m){
+	if(!selectFeatures)
+		return m ;
+	else{
+		int n = goodCols.size() ;
+		Mat res = Mat(m.rows,n,CV_32FC1) ;
+
+		for (int k=0; k<n;k++){
+			//Mat temp = res.col(k) ;
+			//m.col(goodCols[k]).copyTo(temp) ;
+			for(int i=0; i < m.rows;i++){
+				res.at<float>(i,k) = m.at<float>(i,goodCols[k]) ;
+			}
+		}
+
+		return res ;
+	}
+}
+
 
 vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose){
 	Mat reframedImg = input(searchZone);
@@ -343,7 +364,7 @@ void buildSiftDictionary(int i,String db,bool verbose){
 	
 }
 
-void buildPCAreducer(int nb_coponents,String db , bool verbose){
+void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols , bool verbose){
 
 	String dir_classifiers = "../classifiers/" + db ;
 	String dir_reducers = "../reducers/" + db ;
@@ -491,7 +512,12 @@ void buildPCAreducer(int nb_coponents,String db , bool verbose){
 	writeMatToFile(reyeFeaturesUnclustered,classesUnclustered_eye,(dir_allFeatures+"/reye_features.csv")) ;
 	writeMatToFile(mouthFeaturesUnclustered,classesUnclustered_mouth,(dir_allFeatures+"/mouth_features.csv")) ;
 	writeMatToFile(noseFeaturesUnclustered,classesUnclustered_nose,(dir_allFeatures+"/nose_features.csv")) ;
-
+	/*
+	writeMatToFile(selectCols(goodCols[0],leyeFeaturesUnclustered),classesUnclustered_eye,(dir_allFeatures+"/leye_features.csv")) ;
+	writeMatToFile(selectCols(goodCols[1],reyeFeaturesUnclustered),classesUnclustered_eye,(dir_allFeatures+"/reye_features.csv")) ;
+	writeMatToFile(selectCols(goodCols[2],mouthFeaturesUnclustered),classesUnclustered_mouth,(dir_allFeatures+"/mouth_features.csv")) ;
+	writeMatToFile(selectCols(goodCols[3],noseFeaturesUnclustered),classesUnclustered_nose,(dir_allFeatures+"/nose_features.csv")) ;
+	*/
 	if(pca){
 		cout << endl;
 		cout << "Show PCA for left eyes " << endl ;
@@ -504,10 +530,10 @@ void buildPCAreducer(int nb_coponents,String db , bool verbose){
 		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
 	}
 
-	Mat leye_reducer = computePCA(leyeFeaturesUnclustered,nb_coponents);
-	Mat reye_reducer = computePCA(reyeFeaturesUnclustered,nb_coponents);
-	Mat mouth_reducer = computePCA(mouthFeaturesUnclustered,nb_coponents);
-	Mat nose_reducer = computePCA(noseFeaturesUnclustered,nb_coponents);
+	Mat leye_reducer = computePCA(selectCols(goodCols[0],leyeFeaturesUnclustered),nb_coponents);
+	Mat reye_reducer = computePCA(selectCols(goodCols[1],reyeFeaturesUnclustered),nb_coponents);
+	Mat mouth_reducer = computePCA(selectCols(goodCols[2],mouthFeaturesUnclustered),nb_coponents);
+	Mat nose_reducer = computePCA(selectCols(goodCols[3],noseFeaturesUnclustered),nb_coponents);
 	cout << "Size reducers " << leye_reducer.size() << " " << mouth_reducer.size() << " " << nose_reducer.size() << endl ;
 	
 	map<int,Mat> training_set ;
@@ -515,10 +541,10 @@ void buildPCAreducer(int nb_coponents,String db , bool verbose){
 		Mat samples(1,4*nb_coponents,CV_32FC1);
 		//cout << "size : " << eyes_training_set[k].size() << endl ;
 		//cout << "size mouth : " << mouth_training_set[k].size() << " " << nose_training_set[k].size() << endl ;
-		Mat reduced_leye = leye_training_set[k] * leye_reducer ;
-		Mat reduced_reye = reye_training_set[k] * reye_reducer ;
-		Mat reduced_mouth = mouth_training_set[k] * mouth_reducer ;
-		Mat reduced_nose = nose_training_set[k] * nose_reducer ;
+		Mat reduced_leye = selectCols(goodCols[0],leye_training_set[k]) * leye_reducer ;
+		Mat reduced_reye = selectCols(goodCols[1],reye_training_set[k]) * reye_reducer ;
+		Mat reduced_mouth = selectCols(goodCols[2],mouth_training_set[k]) * mouth_reducer ;
+		Mat reduced_nose = selectCols(goodCols[3],nose_training_set[k]) * nose_reducer ;
 
 		vector<Mat> matrices ;
 		matrices.push_back(reduced_leye) ;
@@ -537,7 +563,7 @@ void buildPCAreducer(int nb_coponents,String db , bool verbose){
 
 	CvSVMParams params = chooseSVMParams() ;
 	vector<CvParamGrid> grids = chooseSVMGrids() ;
-	int k_fold = 2 ;
+	int k_fold = 3 ;
 
 	Mat labels,temp ;
 	string fname ;
@@ -1107,7 +1133,7 @@ void predict(String db){
 }
 
 
-void predictPCA(String db){
+void predictPCA(String db,vector<vector<int>> goodCols){
 
 	String dir_classifiers = "../classifiers/" + db ;
 	String dir_reducers = "../reducers/" + db ;
@@ -1185,7 +1211,6 @@ void predictPCA(String db){
 			int nb_images = 0 ;
 			int nb_error = 0 ;
 			for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
-				nb_images ++ ;
 				cout << it2->path() << endl ;
 				path p2 = it2->path() ;
 				if(is_regular_file(it2->status())){
@@ -1250,11 +1275,12 @@ void predictPCA(String db){
 					else
 						descriptorNose = Mat::zeros(1,128,CV_32FC1);
 					if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+						nb_images ++ ;
 						//cout << "sizes " << reducer_leye.size() << " " << descriptorLEye.size() << endl ;
-						Mat leye_samples = descriptorLEye * reducer_leye;
-						Mat reye_samples = descriptorREye * reducer_reye;
-						Mat mouth_samples = descriptorMouth * reducer_mouth;
-						Mat nose_samples = descriptorNose * reducer_nose ;
+						Mat leye_samples = selectCols(goodCols[0],descriptorLEye) * reducer_leye;
+						Mat reye_samples = selectCols(goodCols[1],descriptorREye) * reducer_reye;
+						Mat mouth_samples = selectCols(goodCols[2],descriptorMouth) * reducer_mouth;
+						Mat nose_samples = selectCols(goodCols[3],descriptorNose) * reducer_nose ;
 						vector<Mat> matrices ; 
 						matrices.push_back(leye_samples) ;
 						matrices.push_back(reye_samples) ;
