@@ -246,7 +246,6 @@ void buildSiftDictionary(int i,String db,bool verbose){
 	//The SIFT feature extractor and descriptor
 	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
 	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
-	Mat img_with_sift;
 
 	//Images to extract feature descriptors and build the vocabulary
 	int classPolitician=1;
@@ -431,6 +430,11 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols ,
 					if(faces.size() > 1)
 						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					if(verbose){
+						rectangle(input,searchZone,Scalar(0,255,0),1,8,0) ;
+						imshow("face",input) ;
+						waitKey() ;
+					}
 					Rect searchEyeZone = faces[0] ;
 					searchEyeZone.height /= 2 ;
 					keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,verbose);
@@ -560,6 +564,20 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols ,
 		fs.release();
 		//cout << samples << endl << endl ;
 	}
+	cout << training_set[0].size() << " " << training_set[1].size() << " " << training_set[2].size() << endl ;
+	Mat allSamples ;
+	vector<Mat> matrices ;
+	matrices.push_back(training_set[0]) ;
+	matrices.push_back(training_set[1]) ;
+	matrices.push_back(training_set[2]) ;
+	vconcat( matrices,allSamples);
+	vector<int> allclasses;
+	allclasses.insert(allclasses.begin(),(training_set[0]).rows,1);
+	allclasses.insert(allclasses.end(),(training_set[1]).rows,2);
+	allclasses.insert(allclasses.end(),(training_set[2]).rows,3);
+	cout << allclasses.size() << endl ;
+	writeMatToFile(allSamples,allclasses,(dir_allFeatures+"/allFeatures.csv"));
+	
 
 	CvSVMParams params = chooseSVMParams() ;
 	vector<CvParamGrid> grids = chooseSVMGrids() ;
@@ -615,21 +633,6 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols ,
 	FileStorage fs3((dir_reducers +"/nose_reducer.yml"), FileStorage::WRITE);
 	fs3 << "reducer" << nose_reducer;
 	fs3.release();
-
-
-	/*
-	FileStorage fs4("../data/leye_features.csv", FileStorage::WRITE);
-	fs4 << "features" << leyeFeaturesUnclustered;
-	fs4.release();
-	FileStorage fs5("../data/reye_features.csv", FileStorage::WRITE);
-	fs5 << "features" << reyeFeaturesUnclustered;
-	fs5.release();
-	FileStorage fs6("../data/mouth_features.csv", FileStorage::WRITE);
-	fs6 << "features" << mouthFeaturesUnclustered;
-	fs6.release();
-	FileStorage fs7("../data/nose_features.csv", FileStorage::WRITE);
-	fs7 << "features" << noseFeaturesUnclustered;
-	fs7.release(); */
 
 	/*
 	vector<Mat> reducers ;

@@ -27,7 +27,7 @@ vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame )
     equalizeHist( frame_gray, frame_gray );
 
     //-- Detect faces
-    face_classifier.detectMultiScale(frame_gray, faces, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
+    face_classifier.detectMultiScale(frame_gray, faces, 1.1, 4, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
 
     return faces;
 }
