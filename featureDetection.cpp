@@ -27,7 +27,7 @@ const int nb_celebrities = 3 ;
 
 void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename)
 {
-    ofstream fout(filename);
+    ofstream fout(filename.c_str());
 
     if(!fout)
     {
@@ -360,10 +360,10 @@ void buildSiftDictionary(int i,String db,bool verbose){
 		cout << "Show PCA for nose " << endl ;
 		showPCA(noseFeaturesUnclustered,classesUnclustered_nose,"Nose");
 	}
-	
+
 }
 
-void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols , bool verbose){
+void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols , bool verbose){
 
 	String dir_classifiers = "../classifiers/" + db ;
 	String dir_reducers = "../reducers/" + db ;
@@ -382,6 +382,7 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols ,
 	Mat descriptorREye;
 	Mat descriptorMouth;
 	Mat descriptorNose;
+
 	//To store all the descriptors that are extracted from all the images.
 	Mat leyeFeaturesUnclustered;
 	Mat reyeFeaturesUnclustered;
@@ -390,9 +391,10 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int>> goodCols ,
 	vector<int> classesUnclustered_eye;
 	vector<int> classesUnclustered_mouth;
 	vector<int> classesUnclustered_nose;
+
 	//The SIFT feature extractor and descriptor
-	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
-	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
+	const Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT");
+	const Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT");
 	Mat img_with_sift;
 
 	map<int,Mat> leye_training_set,reye_training_set,mouth_training_set,nose_training_set ;
@@ -1136,7 +1138,7 @@ void predict(String db){
 }
 
 
-void predictPCA(String db,vector<vector<int>> goodCols){
+void predictPCA(String db,vector<vector<int> > goodCols){
 
 	String dir_classifiers = "../classifiers/" + db ;
 	String dir_reducers = "../reducers/" + db ;
@@ -1200,7 +1202,7 @@ void predictPCA(String db,vector<vector<int>> goodCols){
     vector<KeyPoint> keypoints;  
 	string filename;
 	string celebrityName ;
-	map<string,pair<int,int>> results[2] ;
+	map<string,pair<int,int> > results[2] ;
 
 	String dir_data[2] ;
 	dir_data[0] = dir_unlabeled_data ;
@@ -1316,7 +1318,7 @@ void predictPCA(String db,vector<vector<int>> goodCols){
 					cout << endl ;
 				}
 			}
-			results[k].insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
+			results[k].insert(pair<string,pair<int,int> >(celebrityName,pair<int,int>(nb_error,nb_images)));
 		}
 	}
 	
