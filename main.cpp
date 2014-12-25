@@ -49,11 +49,11 @@ int main(int argc, char ** argv){
 	goodCols.push_back(fNose);
 	
 	String database = "yale_face_db" ;
-	buildPCAreducer(30,database,goodCols,false) ;
+	buildPCAreducer2(30,database,goodCols,false) ;
 
 	//createSVMClassifier() ;
 
-	predictPCA(database,goodCols) ;
+	predictPCA2(database,goodCols) ;
 
 	return 0 ;
 }

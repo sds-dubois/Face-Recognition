@@ -14,6 +14,7 @@ using namespace cv ;
 
 void buildSiftDictionary(int i,String database,bool verbose) ;
 void buildPCAreducer(int nb_coponents,String database,vector<vector<int>> goodCols,bool verbose) ;
+void buildPCAreducer2(int nb_coponents,String database,vector<vector<int>> goodCols,bool verbose) ;
 
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
 Mat computePCA(Mat features,int nb_coponents) ;
@@ -23,3 +24,4 @@ int createSVMClassifier(String database) ;
 map<int,CvSVM*> loadSVMClassifier(void) ;
 void predict(String database) ;
 void predictPCA(String database,vector<vector<int>> goodCols) ;
+void predictPCA2(String database,vector<vector<int>> goodCols) ;
