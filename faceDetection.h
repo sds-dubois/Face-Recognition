@@ -13,6 +13,8 @@ CascadeClassifier getEyesCascadeClassifier(void);
 CascadeClassifier getMouthCascadeClassifier(void);
 CascadeClassifier getNoseCascadeClassifier(void);
 vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame);
+Rect selectBestFace(Mat frame, vector<Rect> faces);
+void showAllFeatures(Mat frame, vector<Rect> faces);
 vector<Rect> detectEye(CascadeClassifier eye_classifier, Mat frame ) ;
 vector<Rect> detectMouth(CascadeClassifier mouth_classifier, Mat frame ) ;
 vector<Rect> detectNose(CascadeClassifier nose_classifier, Mat frame ) ;

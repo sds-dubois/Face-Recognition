@@ -27,10 +27,87 @@ vector<Rect> detectFaces(CascadeClassifier face_classifier, Mat frame )
     equalizeHist( frame_gray, frame_gray );
 
     //-- Detect faces
-    face_classifier.detectMultiScale(frame_gray, faces, 1.1, 4, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
-
+    face_classifier.detectMultiScale(frame_gray, faces, 1.1, 4, 0);
     return faces;
 }
+
+/**
+ * This function returns the most probable face among the given faces
+ * The rule is the following : we return the face with the highest
+ * number of features (eyes, nose, mouth) inside
+ */
+Rect selectBestFace(Mat frame, vector<Rect> faces){
+    CascadeClassifier eyes_class = getEyesCascadeClassifier();
+    CascadeClassifier nose_class = getNoseCascadeClassifier();
+    CascadeClassifier mouth_class = getMouthCascadeClassifier();
+    Mat frame_gray = frame.clone();
+    equalizeHist( frame_gray, frame_gray );
+
+    vector<int> nb_features(faces.size());
+
+    for(int i=0;i<faces.size();i++){
+        Mat reframedImg = frame(faces[i]);
+        vector<Rect> features = detectEye(eyes_class, reframedImg);
+        nb_features[i] = features.size();
+        features = detectMouth(mouth_class, reframedImg);
+        nb_features[i] += features.size();
+        features = detectNose(nose_class, reframedImg);
+        nb_features[i] += features.size();
+    }
+    int i_max=0;
+    int val_max = 0;
+    for(int i=0;i<faces.size();i++){
+        if(nb_features[i] >= val_max){
+            val_max = nb_features[i];
+            i_max = i;
+        }
+    }
+    return faces[i_max];
+}
+
+/**
+ * Show all features in an image : faces, eyes, mouthes, noses
+ */
+void showAllFeatures(Mat frame, vector<Rect> faces){
+    CascadeClassifier eyes_class = getEyesCascadeClassifier();
+    CascadeClassifier nose_class = getNoseCascadeClassifier();
+    CascadeClassifier mouth_class = getMouthCascadeClassifier();
+    Mat frame_gray = frame.clone();
+    equalizeHist( frame_gray, frame_gray );
+
+    cerr << faces.size() << " faces detected " << endl;
+    for(int i=0;i<faces.size();i++){
+        rectangle(frame_gray, faces[i], Scalar(255, 255, 255), 1, 8, 0);
+    }
+    imshow("AllFeatures", frame_gray);
+    waitKey();
+
+    vector<Rect> eyes = detectEye(eyes_class, frame);
+    for(int i=0;i<eyes.size();i++){
+        rectangle(frame_gray, eyes[i], Scalar(255, 255, 255), 1, 8, 0);
+    }
+    cerr << eyes.size() << " eyes detected" << endl;
+    imshow("AllFeatures", frame_gray);
+    waitKey();
+
+    vector<Rect> noses = detectNose(nose_class, frame);
+    for(int i=0;i<noses.size();i++){
+        rectangle(frame_gray, noses[i], Scalar(255, 255, 255), 1, 8, 0);
+    }
+    cerr << noses.size() << " noses" << endl;
+    imshow("AllFeatures", frame_gray);
+    waitKey();
+
+    vector<Rect> mouthes = detectMouth(mouth_class, frame);
+    for(int i=0;i<mouthes.size();i++){
+        rectangle(frame_gray, mouthes[i], Scalar(255, 255, 255), 1, 8, 0);
+    }
+    cerr << mouthes.size() << " mouthes" << endl;
+    imshow("AllFeatures", frame_gray);
+
+    waitKey();
+}
+
 
 int detectFacesWebcam(){
     String face_cascade_name = "../lib/haarcascade_frontalface_alt.xml";
