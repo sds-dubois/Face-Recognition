@@ -107,30 +107,65 @@ def display_var(path):
 	
 		
 
-show(2,'../allFeatures/yale_face_db/leye_features.csv','left_eye')
-show(3,'../allFeatures/yale_face_db/reye_features.csv','right_eye')
-show(4,'../allFeatures/yale_face_db/mouth_features.csv','mouth')
-show(5,'../allFeatures/yale_face_db/nose_features.csv','nose')
+# show(2,'../allFeatures/yale_face_db/leye_features.csv','left_eye')
+# show(3,'../allFeatures/yale_face_db/reye_features.csv','right_eye')
+# show(4,'../allFeatures/yale_face_db/mouth_features.csv','mouth')
+# show(5,'../allFeatures/yale_face_db/nose_features.csv','nose')
 
-abs = zeros((128,1))
-for k in range(1,129):
-	abs[k-1] = k
+# abs = zeros((128,1))
+# for k in range(1,129):
+	# abs[k-1] = k
 	
-var_leye1,var_leye2 = display_var('../allFeatures/yale_face_db/leye_features.csv')
-var_reye1,var_reye2 = display_var('../allFeatures/yale_face_db/reye_features.csv')
-var_mouth1,var_mouth2 = display_var('../allFeatures/yale_face_db/mouth_features.csv')
-var_nose1,var_nose2 = display_var('../allFeatures/yale_face_db/nose_features.csv')
+# var_leye1,var_leye2 = display_var('../allFeatures/yale_face_db/leye_features.csv')
+# var_reye1,var_reye2 = display_var('../allFeatures/yale_face_db/reye_features.csv')
+# var_mouth1,var_mouth2 = display_var('../allFeatures/yale_face_db/mouth_features.csv')
+# var_nose1,var_nose2 = display_var('../allFeatures/yale_face_db/nose_features.csv')
 
-plt.figure(1)
-plt.plot(abs,var_leye1[:,0],color='r',linewidth=1.0,label='leye')
-plt.plot(abs,var_reye1[:,0],color='b',linewidth=1.0,label='reye')
-plt.plot(abs,var_mouth1[:,0],color='g',linewidth=1.0,label='mouth')
-plt.plot(abs,var_nose1[:,0],color='y',linewidth=1.0,label='nose')
-plt.plot(abs,var_leye2[:,0],'r--',linewidth=1.0,label='leye')
-plt.plot(abs,var_reye2[:,0],'b--',linewidth=1.0,label='reye')
-plt.plot(abs,var_mouth2[:,0],'g--',linewidth=1.0,label='mouth')
-plt.plot(abs,var_nose2[:,0],'y--',linewidth=1.0,label='nose')
-plt.xlabel('nbr features')
-plt.ylabel('Variance')
-plt.legend()
+# plt.figure(1)
+# plt.plot(abs,var_leye1[:,0],color='r',linewidth=1.0,label='leye')
+# plt.plot(abs,var_reye1[:,0],color='b',linewidth=1.0,label='reye')
+# plt.plot(abs,var_mouth1[:,0],color='g',linewidth=1.0,label='mouth')
+# plt.plot(abs,var_nose1[:,0],color='y',linewidth=1.0,label='nose')
+# plt.plot(abs,var_leye2[:,0],'r--',linewidth=1.0,label='leye')
+# plt.plot(abs,var_reye2[:,0],'b--',linewidth=1.0,label='reye')
+# plt.plot(abs,var_mouth2[:,0],'g--',linewidth=1.0,label='mouth')
+# plt.plot(abs,var_nose2[:,0],'y--',linewidth=1.0,label='nose')
+# plt.xlabel('nbr features')
+# plt.ylabel('Variance')
+# plt.legend()
+# plt.show()
+
+my_data = genfromtxt('../allFeatures/yale_face_db/allFeatures.csv', delimiter=',')
+data = my_data[:,1:121]
+dataBis = my_data[:,1:121]
+target= my_data[:,0]
+
+num_feat = 20
+print('Select ' + str(num_feat) + ' best features')
+
+# For each feature we get its feature selection value (x^2 or IG)
+## TODO: uncommnent chiSQ(X,Y) to compute chi^2 measure
+gainIG = infogain(data,target)
+gainChi = chiSQ(data,target)
+index1 = argsort(gainIG)[::-1]
+index2 = argsort(gainChi)[::-1]
+# Select the top num_feat features
+data = data[:,index2[:num_feat]]
+
+print(index2[:num_feat])
+newData3 = show3D(data)
+newDataBis3 = show3D(dataBis)
+
+fig = plt.figure(6)
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(newData3[:,0],newData3[:,1], newData3[:,2], c=target)
+ax.set_title("Projection to the top-3 eigenvectors after feature selection -all")
+plt.draw()  
+
+fig = plt.figure(7)
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(newDataBis3[:,0],newDataBis3[:,1], newDataBis3[:,2], c=target)
+ax.set_title("Projection to the top-3 eigenvectors -all")
+plt.draw()  
+
 plt.show()
