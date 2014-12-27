@@ -25,6 +25,16 @@ const bool pca=false;
 const bool selectFeatures = true ;
 const int nb_celebrities = 3 ;
 
+void addNumberToFile(const char * filename, float n)
+{
+    ofstream fout(filename, ios_base::out|ios_base::app);
+    if(!fout)
+    {
+        cout << "File " << filename << " could not be opened" << endl;
+    }
+    fout << n << endl;
+    fout.close();
+}
 void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename)
 {
     ofstream fout(filename.c_str());
@@ -80,6 +90,10 @@ vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mo
 		if(mouths.size() >1)
 			cout << "Attention : plus d'une bouche trouvee" << endl ;
 		Rect mouthZone = mouths[0] ;
+        addNumberToFile("../stats/mouth_x.csv", (float)mouthZone.x/searchZone.width);
+        addNumberToFile("../stats/mouth_width.csv", (float)mouthZone.width/searchZone.width);
+        addNumberToFile("../stats/mouth_y.csv", (float)mouthZone.y/searchZone.height);
+        addNumberToFile("../stats/mouth_height.csv", (float)mouthZone.height/searchZone.height);
 		mouthZone.x += searchZone.x ;
 		mouthZone.y += searchZone.y ;
 		//Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
@@ -114,6 +128,10 @@ vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nos
 		if(noses.size() >1)
 			cout << "Attention : plus d'un nez trouve" << endl ;
 		Rect nose = noses[0] ;
+        addNumberToFile("../stats/nose_x.csv", (float)nose.x/searchZone.width);
+        addNumberToFile("../stats/nose_width.csv", (float)nose.width/searchZone.width);
+        addNumberToFile("../stats/nose_y.csv", (float)nose.y/searchZone.height);
+        addNumberToFile("../stats/nose_height.csv", (float)nose.height/searchZone.height);
 		nose.x += searchZone.x ;
 		nose.y += searchZone.y ;
 		//Mat mask = Mat::zeros(input.size[0], input.size[1], CV_8U); 
@@ -193,9 +211,17 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,Rect searchZone,CascadeClassifier eyes
 		if(eyes.size() >2)
 			cout << "Attention : plus de deux yeux trouvees" << endl;
 		Rect eyeZone1 = eyes[0] ;
+        addNumberToFile("../stats/eye_x.csv", (float)eyeZone1.x / searchZone.width);
+        addNumberToFile("../stats/eye_width.csv", (float)eyeZone1.width / searchZone.width);
+        addNumberToFile("../stats/eye_y.csv", (float)eyeZone1.y / searchZone.height);
+        addNumberToFile("../stats/eye_height.csv", (float)eyeZone1.height / searchZone.height);
 		eyeZone1.x += searchZone.x ;
 		eyeZone1.y += searchZone.y ;
-		Rect eyeZone2 = eyes[1] ;
+        Rect eyeZone2 = eyes[1] ;
+        addNumberToFile("../stats/eye_x.csv", (float)eyeZone2.x / searchZone.width);
+        addNumberToFile("../stats/eye_width.csv", (float)eyeZone2.width / searchZone.width);
+        addNumberToFile("../stats/eye_y.csv", (float)eyeZone2.y / searchZone.height);
+        addNumberToFile("../stats/eye_height.csv", (float)eyeZone2.height / searchZone.height);
 		eyeZone2.x += searchZone.x ;
 		eyeZone2.y += searchZone.y ;
 		if(verbose){
@@ -429,9 +455,11 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols 
 				float alpha =0 ;
 				vector<KeyPoint> keypoints_eyes;
 				if(faces.size() >= 1){
-					if(faces.size() > 1)
-						cout << "Attention : plus d'un visage detecte" << endl ;
 					searchZone = faces[0] ;
+					if(faces.size() > 1){
+                        searchZone = selectBestFace(input, faces);
+						cout << "Attention : plus d'un visage detecte" << endl ;
+                    }
 					if(verbose){
 						rectangle(input,searchZone,Scalar(0,255,0),1,8,0) ;
 						imshow("face",input) ;
