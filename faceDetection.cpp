@@ -110,7 +110,7 @@ void showAllFeatures(Mat frame, vector<Rect> faces){
         rectangle(frame_gray, faces[i], Scalar(255, 255, 255), 1, 8, 0);
     }
     imshow("AllFeatures", frame_gray);
-    waitKey();
+    //waitKey();
 
     vector<Rect> eyes = detectEye(eyes_class, frame);
     for(int i=0;i<eyes.size();i++){
@@ -118,7 +118,7 @@ void showAllFeatures(Mat frame, vector<Rect> faces){
     }
     cerr << eyes.size() << " eyes detected" << endl;
     imshow("AllFeatures", frame_gray);
-    waitKey();
+    //waitKey();
 
     vector<Rect> noses = detectNose(nose_class, frame);
     for(int i=0;i<noses.size();i++){
@@ -126,7 +126,7 @@ void showAllFeatures(Mat frame, vector<Rect> faces){
     }
     cerr << noses.size() << " noses" << endl;
     imshow("AllFeatures", frame_gray);
-    waitKey();
+    //waitKey();
 
     vector<Rect> mouthes = detectMouth(mouth_class, frame);
     for(int i=0;i<mouthes.size();i++){

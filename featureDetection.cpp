@@ -458,6 +458,8 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols 
 					searchZone = faces[0] ;
 					if(faces.size() > 1){
                         searchZone = selectBestFace(input, faces);
+						if(verbose)
+							showAllFeatures(input,faces);
 						cout << "Attention : plus d'un visage detecte" << endl ;
                     }
 					if(verbose){
@@ -741,7 +743,7 @@ void buildPCAreducer2(int nb_coponents,String db , vector<vector<int>> goodCols 
 				vector<KeyPoint> keypoints_eyes;
 				if(faces.size() >= 1){
 					if(faces.size() > 1){
-                        searchZone = selectBestFace2(input, faces);
+                        searchZone = selectBestFace(input, faces);
 						cout << "Attention : plus d'un visage detecte" << endl ;
                     }
 					searchZone = faces[0] ;
@@ -875,7 +877,7 @@ void buildPCAreducer2(int nb_coponents,String db , vector<vector<int>> goodCols 
 	
 	CvSVMParams params = chooseSVMParams() ;
 	vector<CvParamGrid> grids = chooseSVMGrids() ;
-	int k_fold = 3 ;
+	int k_fold = 4 ;
 
 	string fname ;
 
@@ -1805,7 +1807,7 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 					vector<KeyPoint> keypoints_eyes;
 					if(faces.size() >= 1){
 						if(faces.size() > 1){
-							searchZone = selectBestFace2(input, faces);
+							searchZone = selectBestFace(input, faces);
 							cout << "Attention : plus d'un visage detecte" << endl ;
 						}
 						searchZone = faces[0] ;
@@ -1844,7 +1846,9 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 						for(int x=0;x<nb_celebrities;x++){
 							prediction[x] += leye_classifiers[x].predict(leye_samples,true) ;
 							prediction[x] += reye_classifiers[x].predict(reye_samples,true) ;
+							cout << prediction[x] << " " ;
 						}
+						cout << endl ;
 					}
 					Mat descriptorMouth ;
 					if(keypoints_mouth.size() != 0){
@@ -1852,7 +1856,9 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 						extractor->compute(input, keypoints_mouth,descriptorMouth);
 						for(int x=0;x<nb_celebrities;x++){
 							prediction[x] += mouth_classifiers[x].predict(selectCols(goodCols[2],descriptorMouth)* reducer_mouth,true) ;
+							cout << prediction[x] << " " ;
 						}
+						cout << endl ;
 					}
 					Mat descriptorNose ;
 					if(keypoints_nose.size() != 0){
@@ -1860,7 +1866,9 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 						extractor->compute(input, keypoints_nose,descriptorNose);
 						for(int x=0;x<nb_celebrities;x++){
 							prediction[x] += nose_classifiers[x].predict(selectCols(goodCols[3],descriptorNose)* reducer_nose,true) ;
+							cout << prediction[x] << " " ;
 						}
+						cout << endl ;
 					}
 					if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
 						nb_images ++ ;
