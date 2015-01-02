@@ -51,7 +51,6 @@ int main(int argc, char ** argv){
 
 	String database = "yale_face_db" ;
 	buildPCAreducer2(30,database,goodCols,false) ;
-
 	//createSVMClassifier() ;
 
 	predictPCA2(database,goodCols) ;

@@ -740,8 +740,10 @@ void buildPCAreducer2(int nb_coponents,String db , vector<vector<int>> goodCols 
 				float alpha =0 ;
 				vector<KeyPoint> keypoints_eyes;
 				if(faces.size() >= 1){
-					if(faces.size() > 1)
+					if(faces.size() > 1){
+                        searchZone = selectBestFace2(input, faces);
 						cout << "Attention : plus d'un visage detecte" << endl ;
+                    }
 					searchZone = faces[0] ;
 					if(verbose){
 						rectangle(input,searchZone,Scalar(0,255,0),1,8,0) ;
@@ -873,7 +875,7 @@ void buildPCAreducer2(int nb_coponents,String db , vector<vector<int>> goodCols 
 	
 	CvSVMParams params = chooseSVMParams() ;
 	vector<CvParamGrid> grids = chooseSVMGrids() ;
-	int k_fold = 6 ;
+	int k_fold = 3 ;
 
 	string fname ;
 
@@ -1562,8 +1564,10 @@ void predictPCA(String db,vector<vector<int> > goodCols){
 					float alpha =0 ;
 					vector<KeyPoint> keypoints_eyes;
 					if(faces.size() >= 1){
-						if(faces.size() > 1)
+						if(faces.size() > 1){
+							searchZone = selectBestFace(input, faces);
 							cout << "Attention : plus d'un visage detecte" << endl ;
+						}
 						searchZone = faces[0] ;
 						Rect searchEyeZone = faces[0] ;
 						searchEyeZone.height /= 2 ;
@@ -1800,8 +1804,10 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 					float alpha =0 ;
 					vector<KeyPoint> keypoints_eyes;
 					if(faces.size() >= 1){
-						if(faces.size() > 1)
+						if(faces.size() > 1){
+							searchZone = selectBestFace2(input, faces);
 							cout << "Attention : plus d'un visage detecte" << endl ;
+						}
 						searchZone = faces[0] ;
 						Rect searchEyeZone = faces[0] ;
 						searchEyeZone.height /= 2 ;
