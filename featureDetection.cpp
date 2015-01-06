@@ -695,6 +695,8 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
     CascadeClassifier nose_classifier = getNoseCascadeClassifier();
 	initModule_nonfree() ;
 
+	Mat featureDetails = Mat(0,4,CV_8U); //ordre : classe / eye / mouth / nose
+
 	//To store the SIFT descriptor of current image
 	Mat descriptorLEye;
 	Mat descriptorREye;
@@ -730,13 +732,15 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 		Mat mouth_samples = Mat(0,128,CV_32FC1);
 		Mat nose_samples = Mat(0,128,CV_32FC1);		
 		counter = 0 ;
-		for(directory_iterator it2(p); it2 != directory_iterator(); it2 ++){
+		for(directory_iterator it2(p); it2 != directory_iterator() && counter < 20; it2 ++){
 			cout << it2->path() << endl ;
 			path p2 = it2->path() ;
 			if(is_regular_file(it2->status())){
                 // Loading file
                 Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
 				vector<Rect> faces = detectFaces(face_classifier, input); 
+				Mat zonesFound(1,4,CV_8U) ;
+				zonesFound.at<uchar>(0,0) = index ; //classe de l'image traitee
 				Rect searchZone ;
 				vector<KeyPoint> keypoints_mouth ;
 				vector<KeyPoint> keypoints_nose ;
@@ -766,6 +770,7 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 					cout << "Attention : pas de visage detecte" << endl ;
 				}
 				if(keypoints_eyes.size() != 0){
+					zonesFound.at<uchar>(0,1) = 1 ;
 					if(keypoints_eyes.size() != 2)
 						cout << "ERROR nb d oeil retourne != 2" << endl ;
 					int x1 = keypoints_eyes[0].pt.x ;
@@ -792,6 +797,7 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 					descriptorREye = Mat::zeros(1,128,CV_32FC1);
 				}
 				if(keypoints_mouth.size() != 0){
+					zonesFound.at<uchar>(0,2) = 1 ;
 					cout << "mouth ok" << endl ;
 					extractor->compute(input, keypoints_mouth,descriptorMouth);
 					mouthFeaturesUnclustered.push_back(descriptorMouth);
@@ -801,6 +807,7 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 				else
 					descriptorMouth = Mat::zeros(1,128,CV_32FC1);
 				if(keypoints_nose.size() != 0){
+					zonesFound.at<uchar>(0,3) = 1 ;
 					cout << "nose ok " << endl ;
 					extractor->compute(input, keypoints_nose,descriptorNose);
 					noseFeaturesUnclustered.push_back(descriptorNose);
@@ -810,6 +817,8 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 				else
 					descriptorNose = Mat::zeros(1,128,CV_32FC1);
 				if(keypoints_eyes.size() + keypoints_mouth.size() + keypoints_nose.size() != 0){
+					featureDetails.push_back(zonesFound) ;
+					cout << zonesFound << endl ;
 					counter ++ ;
 				}
 			}
@@ -841,6 +850,7 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 	f << "mouth" << mouthFeaturesUnclustered;
 	f << "classes_nose" << classesUnclustered_nose;
 	f << "nose" << noseFeaturesUnclustered;
+	f << "featureDetails" << featureDetails ;
 	f.release();
 
 	if(pca){
@@ -2464,7 +2474,7 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 	CvSVM mouth_classifiers[nb_celebrities] ;
 	String celebrities[nb_celebrities] ;
 
-	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered;
+	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered,featureDetails;
 	vector<int> classesUnclustered_eye,classesUnclustered_nose,classesUnclustered_mouth ;
 	FileStorage f((dir_allFeatures+"/all.yml"), FileStorage::READ);
 	f["classes_eye"] >> classesUnclustered_eye;
@@ -2474,6 +2484,7 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 	f["mouth"] >> mouthFeaturesUnclustered;
 	f["classes_nose"] >> classesUnclustered_nose;
 	f["nose"] >> noseFeaturesUnclustered;
+	f["featureDetails"] >> featureDetails ;
 	f.release();
 
 	PCA leye_pca,reye_pca,nose_pca,mouth_pca;
@@ -2680,16 +2691,14 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 	dir_data[1] = dir_labeled_data ;
 	int counter ;
 
-	for(int k =0; k<2;k++){
+	for(int k =0; k<1;k++){ //only unlabeled data
 		for (directory_iterator it1(dir_data[k]); it1 != directory_iterator() ; it1++){
 			path p = it1->path() ;
 			celebrityName = p.filename().string() ;
 			cout << " -- Traite : " << celebrityName << endl ;
-			counter = 0 ;
 			int nb_images = 0 ;
 			int nb_error = 0 ;
-			for(directory_iterator it2(p); it2 != directory_iterator() && counter < 70 ; it2 ++){
-				counter ++;
+			for(directory_iterator it2(p); it2 != directory_iterator(); it2 ++){
 				float prediction[nb_celebrities] ;
 				for(int x=0; x < nb_celebrities; x++){
 					prediction[x] = 0;
@@ -2797,13 +2806,83 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 			results[k].insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
 		}
 	}
+
+	for(int k =1; k<2;k++){ //only labeled data => features are already extracted
+		int eye_counter =0 ; int mouth_counter = 0 ; int nose_counter = 0;
+		int nb_images[nb_celebrities] ;
+		int nb_error[nb_celebrities] ;
+		for(int x=0; x < nb_celebrities; x++){
+			nb_error[x] = 0;
+			nb_images[x] = 0;
+		}
+		for(int pic_counter =0 ; pic_counter < featureDetails.rows ; pic_counter++){
+			int classe = featureDetails.at<int>(pic_counter,0) ;
+			celebrityName = names[classe] ;
+			float prediction[nb_celebrities] ;
+			for(int x=0; x < nb_celebrities; x++){
+				prediction[x] = 0;
+			}
+			if(featureDetails.at<int>(pic_counter,1) == 1){
+				Mat descriptorLEye, descriptorREye;
+				descriptorLEye = leyeFeaturesUnclustered.row(eye_counter).clone() ;
+				descriptorREye = reyeFeaturesUnclustered.row(eye_counter).clone() ;
+				Mat leye_samples = leye_pca.project(selectCols(goodCols[0],descriptorLEye));
+				Mat reye_samples = reye_pca.project(selectCols(goodCols[1],descriptorREye));
+				for(int x=0;x<nb_celebrities;x++){
+					prediction[x] += leye_classifiers[x].predict(leye_samples,true) ;
+					prediction[x] += reye_classifiers[x].predict(reye_samples,true) ;
+				}
+				eye_counter ++ ;
+			}
+			if(featureDetails.at<int>(pic_counter,2) == 1){
+				Mat descriptorMouth;
+				descriptorMouth = mouthFeaturesUnclustered.row(mouth_counter).clone() ;
+				for(int x=0;x<nb_celebrities;x++){
+					prediction[x] += mouth_classifiers[x].predict(mouth_pca.project(selectCols(goodCols[2],descriptorMouth)),true) ;
+					//cout << prediction[x] << " " ;
+				}
+				mouth_counter ++ ;
+			
+			}			
+			if(featureDetails.at<int>(pic_counter,3) == 1){
+				Mat descriptorNose;
+				descriptorNose = noseFeaturesUnclustered.row(nose_counter).clone() ;
+				for(int x=0;x<nb_celebrities;x++){
+					prediction[x] += nose_classifiers[x].predict(nose_pca.project(selectCols(goodCols[3],descriptorNose)),true) ;
+				}
+				nose_counter ++ ;
+			
+			}
+			pic_counter ++ ;
+
+			nb_images[classe] ++ ;
+			float min = 100  ;
+			int pred =0 ;
+			for(int x=0;x<nb_celebrities;x++){
+				if (prediction[x] < min){
+					pred = x ;
+					min = prediction[x] ;
+				}
+				cout << prediction[x] << " " ;
+			}
+			cout << endl ;
+			cout << "Classe retenue : " << pred << " = " << names[pred] << endl ;
+			if(celebrityName.compare(names[pred])){
+				cout << "Erreur de classification" << endl ;
+				nb_error[classe] ++ ;
+			}
+
+			for(int x = 0 ; x < nb_celebrities ; x ++){
+				results[k].insert(pair<string,pair<int,int>>(names[x],pair<int,int>(nb_error[x],nb_images[x])));
+			}
+	}
 	
 
 	cout << "Resultats : " << endl ;
 	
 	
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k] << " : " << endl ;
+		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
 		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
 		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
 	}
@@ -2811,7 +2890,8 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 	ofstream fout("../results.yml");
 	for (int k=0;k<nb_celebrities;k++){
 		fout << celebrities[k] << "_unlabeled" << " : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl ;
 	}
 	fout.close();
+	}
 }

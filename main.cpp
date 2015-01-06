@@ -51,7 +51,7 @@ int main(int argc, char ** argv){
 
 	String database = "yale_face_db" ;
 	
-	//featureExtraction(30,database,goodCols,false) ;
+	featureExtraction(database,goodCols,false) ;
 
 	map<int,string> names ;
 	names.insert(pair<int,string>(0,"yaleB20"));
@@ -61,6 +61,6 @@ int main(int argc, char ** argv){
 
 	//predictPCA2(database,goodCols) ;
 
-	classifyAndPredict2(names,128,database,goodCols) ;
+	//classifyAndPredict2(names,128,database,goodCols) ;
 	return 0 ;
 }
