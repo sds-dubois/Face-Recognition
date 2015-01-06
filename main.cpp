@@ -50,10 +50,17 @@ int main(int argc, char ** argv){
 	goodCols.push_back(fNose);
 
 	String database = "yale_face_db" ;
-	buildPCAreducer2(20,database,goodCols,false) ;
-	//createSVMClassifier() ;
+	
+	//featureExtraction(30,database,goodCols,false) ;
 
-	predictPCA2(database,goodCols) ;
+	map<int,string> names ;
+	names.insert(pair<int,string>(0,"yaleB20"));
+	names.insert(pair<int,string>(1,"yaleB21"));
+	names.insert(pair<int,string>(2,"yaleB22"));
+	//initClassification(names,30,database,goodCols) ;
 
+	//predictPCA2(database,goodCols) ;
+
+	classifyAndPredict2(names,128,database,goodCols) ;
 	return 0 ;
 }
