@@ -678,7 +678,7 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols 
 	*/
 }
 
-void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
+void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose){
 
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
@@ -760,7 +760,16 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 					searchMouthZone.height /= 2 ;
 					searchMouthZone.y += searchMouthZone.height ;
 					keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,verbose);
-					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,verbose) ; 
+					keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,verbose) ;
+                    if(keypoints_mouth.size() > 0 && keypoints_nose.size() > 0 && alpha == 0){
+                        Point2f c1 = keypoints_mouth[0].pt;
+                        Point2f c2 = keypoints_nose[0].pt;
+                        alpha = (atan((c1.x-c2.x)/(c2.y-c1.y)))*180/3 ;
+                        keypoints_mouth[0].angle = alpha;
+                        keypoints_nose[0].angle = alpha;
+                    }
+                    enhanceDetection(keypoints_eyes, keypoints_mouth, keypoints_nose);
+
 				}
 				else{
 					cout << "Attention : pas de visage detecte" << endl ;
@@ -857,7 +866,7 @@ void featureExtraction(String db , vector<vector<int>> goodCols , bool verbose){
 
 }
 
-void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int>> goodCols){
+void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols){
 
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
@@ -1741,7 +1750,7 @@ void predictPCA(String db,vector<vector<int> > goodCols){
 	}
 }
 
-void predictPCA2(String db,vector<vector<int>> goodCols){
+void predictPCA2(String db,vector<vector<int> > goodCols){
 
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
@@ -1859,7 +1868,7 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
     vector<KeyPoint> keypoints;  
 	string filename;
 	string celebrityName ;
-	map<string,pair<int,int>> results[2] ;
+	map<string,pair<int,int> > results[2] ;
 
 	String dir_data[2] ;
 	dir_data[0] = dir_unlabeled_data ;
@@ -1977,13 +1986,13 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 					cout << endl ;
 				}
 			}
-			results[k].insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
+			results[k].insert(pair<string,pair<int,int> >(celebrityName,pair<int,int>(nb_error,nb_images)));
 		}
 	}
-	
+
 
 	cout << "Resultats : " << endl ;
-	
+
 	for (int k=0;k<nb_celebrities;k++){
 		cout << "- " << celebrities[k] << " : " << endl ;
 		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
@@ -1991,15 +2000,15 @@ void predictPCA2(String db,vector<vector<int>> goodCols){
 	}
 }
 
-void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int>> goodCols){
+void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols){
 
 	String dir_allFeatures = "../allFeatures/" + db ;
-	
+
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
 	String dir_nose_classifiers = "../classifiers/" + db + "/nose";
 	String dir_mouth_classifiers = "../classifiers/" + db + "/mouth";
-	
+
 	String dir_reducers = "../reducers/" + db ;
 	String dir_labeled_data = "../data/" + db + "/labeled" ;
 	String dir_unlabeled_data = "../data/" + db + "/unlabeled" ;
@@ -2302,7 +2311,7 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
     vector<KeyPoint> keypoints;  
 	string filename;
 	string celebrityName ;
-	map<string,pair<int,int>> results[2] ;
+	map<string,pair<int,int> > results[2] ;
 
 	String dir_data[2] ;
 	dir_data[0] = dir_unlabeled_data ;
@@ -2427,13 +2436,13 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 					cout << endl ;
 				}
 			}
-			results[k].insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
+			results[k].insert(pair<string,pair<int,int> >(celebrityName,pair<int,int>(nb_error,nb_images)));
 		}
 	}
-	
+
 
 	cout << "Resultats : " << endl ;
-	
+
 	for (int k=0;k<nb_celebrities;k++){
 		cout << "- " << celebrities[k] << " : " << endl ;
 		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
@@ -2442,15 +2451,15 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 }
 
 
-void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vector<vector<int>> goodCols){
+void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols){
 
 	String dir_allFeatures = "../allFeatures/" + db ;
-	
+
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
 	String dir_nose_classifiers = "../classifiers/" + db + "/nose";
 	String dir_mouth_classifiers = "../classifiers/" + db + "/mouth";
-	
+
 	String dir_labeled_data = "../data/" + db + "/labeled" ;
 	String dir_unlabeled_data = "../data/" + db + "/unlabeled" ;
 
@@ -2673,7 +2682,7 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
     vector<KeyPoint> keypoints;  
 	string filename;
 	string celebrityName ;
-	map<string,pair<int,int>> results[2] ;
+	map<string,pair<int,int> > results[2] ;
 
 	String dir_data[2] ;
 	dir_data[0] = dir_unlabeled_data ;
@@ -2794,14 +2803,14 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 					cout << endl ;
 				}
 			}
-			results[k].insert(pair<string,pair<int,int>>(celebrityName,pair<int,int>(nb_error,nb_images)));
+			results[k].insert(pair<string,pair<int,int> >(celebrityName,pair<int,int>(nb_error,nb_images)));
 		}
 	}
-	
+
 
 	cout << "Resultats : " << endl ;
-	
-	
+
+
 	for (int k=0;k<nb_celebrities;k++){
 		cout << "- " << celebrities[k] << " : " << endl ;
 		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;

@@ -2,6 +2,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
+#include <opencv2/features2d/features2d.hpp>
 #include <iostream>
 #include <stdio.h>
 
@@ -26,3 +27,4 @@ bool showEyes(string filename,bool verbose);
 void showAllEyes(bool verbose) ;
 void showLeftRightEyes(string filename) ;
 void showEyes(string filename);
+void enhanceDetection(vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose);

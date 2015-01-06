@@ -344,3 +344,20 @@ vector<Rect> detectNose(CascadeClassifier nose_classifier, Mat frame )
 
     return nose;
 }
+
+void enhanceDetection(vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose){
+    if(keypoints_eyes.size() == 1 && keypoints_mouth.size() > 0 && keypoints_nose.size() > 0){
+        Point2f centerNose = keypoints_nose[0].pt;
+        Point2f centerMouth = keypoints_mouth[0].pt;
+        Point2f centerEye = keypoints_eyes[0].pt;
+        Point2f mouthNoseVector = centerNose - centerMouth;
+        mouthNoseVector = (1/norm(mouthNoseVector))*mouthNoseVector;
+        float algebraicDistance = mouthNoseVector.ddot(centerEye - centerMouth);
+        Point H = centerMouth + algebraicDistance*mouthNoseVector;
+        Point2f centerEye2 = 2*H;
+        centerEye2 -= centerEye;
+        KeyPoint eye2(keypoints_eyes[0]);
+        eye2.pt = centerEye2;
+        keypoints_eyes.push_back(eye2);
+    }
+}
