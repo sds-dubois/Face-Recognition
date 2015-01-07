@@ -360,4 +360,7 @@ void enhanceDetection(vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoi
         eye2.pt = centerEye2;
         keypoints_eyes.push_back(eye2);
     }
+    else if(keypoints_eyes.size() == 1){
+        keypoints_eyes.clear();
+    }
 }

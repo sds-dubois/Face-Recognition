@@ -242,7 +242,26 @@ vector<KeyPoint> getSiftOnEyes2(Mat input,Rect searchZone,CascadeClassifier eyes
 			waitKey() ;
 		}
 	}
-	else
+	else if(eyes.size() > 0){
+		Rect eyeZone1 = eyes[0] ;
+        addNumberToFile("../stats/eye_x.csv", (float)eyeZone1.x / searchZone.width);
+        addNumberToFile("../stats/eye_width.csv", (float)eyeZone1.width / searchZone.width);
+        addNumberToFile("../stats/eye_y.csv", (float)eyeZone1.y / searchZone.height);
+        addNumberToFile("../stats/eye_height.csv", (float)eyeZone1.height / searchZone.height);
+        eyeZone1.x += searchZone.x ;
+		eyeZone1.y += searchZone.y ;
+		if(verbose){
+			rectangle(img_with_sift,eyeZone1,Scalar(0,255,0),1,8,0) ;
+		}
+		Point_<float> c1 = Point_<float>(eyeZone1.x+0.5*eyeZone1.size().width,eyeZone1.y+0.5*eyeZone1.size().height);
+		keypoints_best.push_back(KeyPoint(c1.x,c1.y,0.5*(eyeZone1.size().width+eyeZone1.size().height),alpha));
+		if(verbose){
+			drawKeypoints(input,keypoints_best,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+			imshow("Keypoints",img_with_sift) ;
+			waitKey() ;
+		}
+    }
+    else
 		cout << "Error in eyes detection" << endl ;
 
 	return keypoints_best ;
@@ -1921,6 +1940,15 @@ void predictPCA2(String db,vector<vector<int> > goodCols){
 						searchMouthZone.y += searchMouthZone.height ;
 						keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
 						keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ;
+                        if(keypoints_mouth.size() > 0 && keypoints_nose.size() > 0 && alpha == 0){
+                            Point2f c1 = keypoints_mouth[0].pt;
+                            Point2f c2 = keypoints_nose[0].pt;
+                            alpha = (atan((c1.x-c2.x)/(c2.y-c1.y)))*180/3 ;
+                            keypoints_mouth[0].angle = alpha;
+                            keypoints_nose[0].angle = alpha;
+                        }
+                        enhanceDetection(keypoints_eyes, keypoints_mouth, keypoints_nose);
+
 					}
 					else{
 						cout << "Attention : pas de visage detecte" << endl ;
@@ -2367,6 +2395,15 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 						searchMouthZone.y += searchMouthZone.height ;
 						keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,false);
 						keypoints_nose = getSiftOnNose(input,searchZone,nose_classifier,detector,alpha,false) ;
+                        if(keypoints_mouth.size() > 0 && keypoints_nose.size() > 0 && alpha == 0){
+                            Point2f c1 = keypoints_mouth[0].pt;
+                            Point2f c2 = keypoints_nose[0].pt;
+                            alpha = (atan((c1.x-c2.x)/(c2.y-c1.y)))*180/3 ;
+                            keypoints_mouth[0].angle = alpha;
+                            keypoints_nose[0].angle = alpha;
+                        }
+                        enhanceDetection(keypoints_eyes, keypoints_mouth, keypoints_nose);
+
 					}
 					else{
 						cout << "Attention : pas de visage detecte" << endl ;
@@ -2882,7 +2919,7 @@ void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vec
 			}
 
 			for(int x = 0 ; x < nb_celebrities ; x ++){
-				results[k].insert(pair<string,pair<int,int>>(names[x],pair<int,int>(nb_error[x],nb_images[x])));
+				results[k].insert(pair<string,pair<int,int> >(names[x],pair<int,int>(nb_error[x],nb_images[x])));
 			}
 	}
 
