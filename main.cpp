@@ -55,7 +55,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* chosir completeDetection == true pour intuiter un deuxieme oeil lorsque cela est possible
 	*/
-	//featureExtraction(database,goodCols,false,false) ;
+	//featureExtraction(database,goodCols,false,true) ;
 
 	map<int,string> names ;
 	names.insert(pair<int,string>(0,"yaleB20"));
@@ -63,12 +63,12 @@ int main(int argc, char ** argv){
 	names.insert(pair<int,string>(2,"yaleB22"));
 
 	/*
-	* void classifyAndPredict(map<int,string> names ,int nb_components,String db , vector<vector<int> > goodCols) ;
+	* void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid)
 	* nb_components = dimension de la PCA
 	* goodCols = colonnes selectionnees parmi les 128 entiers decrivant un SIFT
 	* chosir completeDetection == true pour tester le modele lorsque l'on a intuite un deuxieme oeil lorsque cela est possible
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
-	classifyAndPredict(names,128,database,goodCols,false,false) ;
+	classifyAndPredict(names,128,database,goodCols,true,true) ;
 	return 0 ;
 }
