@@ -27,4 +27,4 @@ bool showEyes(string filename,bool verbose);
 void showAllEyes(bool verbose) ;
 void showLeftRightEyes(string filename) ;
 void showEyes(string filename);
-void enhanceDetection(vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose);
+void enhanceDetection(vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose, bool completeDetection);

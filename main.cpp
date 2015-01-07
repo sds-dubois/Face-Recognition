@@ -50,17 +50,25 @@ int main(int argc, char ** argv){
 	goodCols.push_back(fNose);
 
 	String database = "yale_face_db" ;
-	
-	featureExtraction(database,goodCols,false) ;
+	/*
+	* void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose,bool completeDetection)
+	* choisir verbose == true pour voir les images et les zones detectees
+	* chosir completeDetection == true pour intuiter un deuxieme oeil lorsque cela est possible
+	*/
+	//featureExtraction(database,goodCols,false,false) ;
 
 	map<int,string> names ;
 	names.insert(pair<int,string>(0,"yaleB20"));
 	names.insert(pair<int,string>(1,"yaleB21"));
 	names.insert(pair<int,string>(2,"yaleB22"));
-	//initClassification(names,30,database,goodCols) ;
 
-	//predictPCA2(database,goodCols) ;
-
-	//classifyAndPredict2(names,128,database,goodCols) ;
+	/*
+	* void classifyAndPredict(map<int,string> names ,int nb_components,String db , vector<vector<int> > goodCols) ;
+	* nb_components = dimension de la PCA
+	* goodCols = colonnes selectionnees parmi les 128 entiers decrivant un SIFT
+	* chosir completeDetection == true pour tester le modele lorsque l'on a intuite un deuxieme oeil lorsque cela est possible
+	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
+	*/
+	classifyAndPredict(names,128,database,goodCols,false,false) ;
 	return 0 ;
 }

@@ -14,18 +14,30 @@ using namespace std;
 using namespace cv ;
 
 void buildSiftDictionary(int i,String database,bool verbose) ;
-void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodCols,bool verbose) ;
-void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose) ;
-void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
 
+// use full descriptors completed with zeros when a zone is not detected
+// extracts features from images and compute classifiers & reducers
+void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodCols,bool verbose) ;
+
+// extracts SIFT descriptors for each zone and store them
+void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose,bool completeDetection) ;
+
+void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
 pair<Mat,Mat> computePCA(Mat features,int nb_coponents) ;
 CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 int createSVMClassifier(String database) ;
 map<int,CvSVM*> loadSVMClassifier(void) ;
+
+// for BoW representation
 void predict(String database) ;
+
+// use PCA reduction & full descriptors completed with zeros when a zone is not detected
 void predictPCA(String database,vector<vector<int> > goodCols) ;
-void predictPCA2(String database,vector<vector<int> > goodCols) ;
-void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
-void classifyAndPredict2(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
+
+// use PCA reduction & a classifier by zone
+void predictPCA2(String database,vector<vector<int> > goodCols,bool completeDetection) ;
+
+// the best to use
+void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
