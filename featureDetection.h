@@ -1,3 +1,4 @@
+#include "opencv2/objdetect/objdetect.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -13,7 +14,14 @@
 using namespace std;
 using namespace cv ;
 
-void buildSiftDictionary(int i,String database,bool verbose) ;
+extern const bool selectFeatures ;
+extern const bool pca ;
+extern const int nb_celebrities  ;
+
+vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose) ;
+vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nose_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose) ;
+vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose) ;
+vector<KeyPoint> getSiftOnEyes2(Mat input,Rect searchZone,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector, float& alpha,bool verbose) ;
 
 // use full descriptors completed with zeros when a zone is not detected
 // extracts features from images and compute classifiers & reducers
@@ -25,13 +33,6 @@ void featureExtraction(String database,vector<vector<int> > goodCols,bool verbos
 void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
 pair<Mat,Mat> computePCA(Mat features,int nb_coponents) ;
-CvSVMParams chooseSVMParams(void) ;
-vector<CvParamGrid> chooseSVMGrids(void) ;
-int createSVMClassifier(String database) ;
-map<int,CvSVM*> loadSVMClassifier(void) ;
-
-// for BoW representation
-void predict(String database) ;
 
 // use PCA reduction & full descriptors completed with zeros when a zone is not detected
 void predictPCA(String database,vector<vector<int> > goodCols) ;
