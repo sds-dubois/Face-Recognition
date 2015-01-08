@@ -1,3 +1,5 @@
+
+#include "opencv2/objdetect/objdetect.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -13,7 +15,6 @@
 using namespace std;
 using namespace cv ;
 
-void buildSiftDictionary(int i,String database,bool verbose) ;
 
 // use full descriptors completed with zeros when a zone is not detected
 // extracts features from images and compute classifiers & reducers
@@ -25,13 +26,6 @@ void featureExtraction(String database,vector<vector<int> > goodCols,bool verbos
 void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
 pair<Mat,Mat> computePCA(Mat features,int nb_coponents) ;
-CvSVMParams chooseSVMParams(void) ;
-vector<CvParamGrid> chooseSVMGrids(void) ;
-int createSVMClassifier(String database) ;
-map<int,CvSVM*> loadSVMClassifier(void) ;
-
-// for BoW representation
-void predict(String database) ;
 
 // use PCA reduction & full descriptors completed with zeros when a zone is not detected
 void predictPCA(String database,vector<vector<int> > goodCols) ;
