@@ -1,3 +1,4 @@
+#include "getSiftKeypoints.h"
 #include "faceDetection.h"
 #include "featureDetection.h"
 #include "bowMethod.h"

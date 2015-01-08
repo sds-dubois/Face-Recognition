@@ -18,11 +18,6 @@ extern const bool selectFeatures ;
 extern const bool pca ;
 extern const int nb_celebrities  ;
 
-vector<KeyPoint> getSiftOnMouth(Mat input, Rect searchZone, CascadeClassifier mouth_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose) ;
-vector<KeyPoint> getSiftOnNose(Mat input, Rect searchZone, CascadeClassifier nose_classifier,Ptr<FeatureDetector> detector,float alpha,bool verbose) ;
-vector<KeyPoint> getSiftOnEyes1(Mat input,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector,bool verbose) ;
-vector<KeyPoint> getSiftOnEyes2(Mat input,Rect searchZone,CascadeClassifier eyes_classifier,Ptr<FeatureDetector> detector, float& alpha,bool verbose) ;
-
 // use full descriptors completed with zeros when a zone is not detected
 // extracts features from images and compute classifiers & reducers
 void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodCols,bool verbose) ;
