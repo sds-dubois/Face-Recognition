@@ -154,10 +154,10 @@ void bowClassifyAndPredict(int i,map<int,string> names ,String db ,bool complete
 	string fname ;
 
 	for (int x=0;x<nb_celebrities;x++){
-		Mat leye_samples(0,i,CV_32FC1) ;
-		Mat reye_samples(0,i,CV_32FC1) ;
-		Mat nose_samples(0,i,CV_32FC1) ;
-		Mat mouth_samples(0,i,CV_32FC1) ;
+		Mat leye_samples(0,128,CV_32FC1) ;
+		Mat reye_samples(0,128,CV_32FC1) ;
+		Mat nose_samples(0,128,CV_32FC1) ;
+		Mat mouth_samples(0,128,CV_32FC1) ;
 		int leye_counter = 0 ;
 		int reye_counter = 0 ;
 		int nose_counter = 0 ;
