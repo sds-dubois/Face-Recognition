@@ -1,3 +1,6 @@
+#include "featureDetection.h"
+#include "tools.h"
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -10,10 +13,8 @@
 #include <fstream>
 #include <stdio.h>
 
+
 using namespace std;
 using namespace cv ;
 
-void buildSiftDictionary(int i,String db,bool verbose) ;
-int init_bowDE(BOWImgDescriptorExtractor& mouth_bowDE,BOWImgDescriptorExtractor& eyes_bowDE,BOWImgDescriptorExtractor& nose_bowDE,String dir) ;
-int createSVMClassifier(String db) ;
-void predictBOW(String db) ;
+void bowClassifyAndPredict(int i,map<int,string> names ,String db,bool completeDetection, bool cross_valid) ;

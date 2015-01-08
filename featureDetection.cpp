@@ -1,6 +1,7 @@
 #include "featureDetection.h"
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
+#include "common.h"
 #include "tools.h"
 
 #include <opencv2/highgui/highgui.hpp>
@@ -22,9 +23,9 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem ;
 
-const bool selectFeatures = false ;
-const bool pca=false;
-const int nb_celebrities = 3 ;
+#define selectFeatures  false 
+#define pca false
+#define nb_celebrities 3
 
 void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols , bool verbose){
 
@@ -1514,14 +1515,6 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 
 	cout << "Classifieurs charges" << endl ;
 
-
-	//The SIFT feature extractor and descriptor
-	Ptr<FeatureDetector> detector = FeatureDetector::create("SIFT") ;
-	Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SIFT") ;
-
-	Mat input ;
-    vector<KeyPoint> keypoints;
-	string filename;
 	string celebrityName ;
 	map<string,pair<int,int> > results[2] ;
 	/*

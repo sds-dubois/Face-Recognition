@@ -1,3 +1,4 @@
+
 #include "opencv2/objdetect/objdetect.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -14,9 +15,6 @@
 using namespace std;
 using namespace cv ;
 
-extern const bool selectFeatures ;
-extern const bool pca ;
-extern const int nb_celebrities  ;
 
 // use full descriptors completed with zeros when a zone is not detected
 // extracts features from images and compute classifiers & reducers
