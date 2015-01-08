@@ -9,5 +9,5 @@ set(Boost_USE_DEBUG_RUNTIME ON)
 FIND_PACKAGE( Boost COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-ADD_EXECUTABLE(facematching main.cpp common.h faceDetection.h faceDetection.cpp featureDetection.h featureDetection.cpp bowMethod.cpp bowMethod.h tools.cpp tools.h getSiftKeypoints.cpp getSiftKeypoints.h)
+ADD_EXECUTABLE(facematching main.cpp faceDetection.h faceDetection.cpp featureDetection.h featureDetection.cpp bowMethod.cpp bowMethod.h tools.cpp tools.h getSiftKeypoints.cpp getSiftKeypoints.h)
 TARGET_LINK_LIBRARIES(facematching ${OpenCV_LIBS} ${Boost_LIBRARIES})

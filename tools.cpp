@@ -2,7 +2,7 @@
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
 #include "bowMethod.h"
-#include "common.h"
+
 
 #include <stdio.h>
 #include <boost/filesystem.hpp>

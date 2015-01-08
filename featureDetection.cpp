@@ -1,7 +1,6 @@
 #include "featureDetection.h"
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
-#include "common.h"
 #include "tools.h"
 
 #include <opencv2/highgui/highgui.hpp>
