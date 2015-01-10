@@ -22,7 +22,7 @@ void clusteringClassifyAndPredict(int i,map<int,string> names ,String db,bool co
 
 //compute dictionaries from sift extracted on training data
 void buildBowDictionary(int i,bool verbose,string db) ;
-//compute SVM classifiers from BOW histograms, from sift extracted on training data & store BOW descriptors of training data
+//compute SVM classifiers from BOW histograms, from sift extracted on training data, & store BOW descriptors of training data
 int createBowClassifier(string db) ;
 //compute & store BOW descriptors of test data
 void computeBowTestDesciptors(string db) ;

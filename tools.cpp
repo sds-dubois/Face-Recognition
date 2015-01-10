@@ -104,3 +104,90 @@ vector<CvParamGrid> chooseSVMGrids(void){
 
 	return grids ;
 }
+
+void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title){
+	cout << "Nbr classes : " << featuresUnclustered.rows << endl ;
+	int num_components = 10;
+    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
+    Mat mean = principalCA.mean.clone();
+    Mat eigenvectors = principalCA.eigenvectors.clone();
+
+    for(int j=0;j<num_components/2;j++){
+        Mat x_vector = eigenvectors.row(j);
+        Mat y_vector = eigenvectors.row(j+1);
+
+        float x_max,y_max,x_min, y_min;
+        bool init=true;
+
+        int width = 400;
+        int height = 1200;
+        Mat planePCA = Mat::zeros(width, height, CV_8UC3);
+        for(int i=0;i<featuresUnclustered.rows;i++){
+            Mat feature_i = featuresUnclustered.row(i);
+            int x = feature_i.dot(x_vector);
+            int y = feature_i.dot(y_vector);
+
+            if(init){
+                x_max = x;
+                x_min = x;
+                y_min = y;
+                y_max = y;
+                init=false;
+            }
+
+            if(x > x_max)
+                x_max = x;
+            if(x<x_min)
+                x_min = x;
+            if(y < y_min)
+                y_min = y;
+            if(y > y_max)
+                y_max = y;
+        }
+        float deltay = y_max - y_min;
+        y_max += deltay/5;
+        y_min -= deltay/5;
+        float deltax = x_max-x_min;
+        x_max += deltax/5;
+        x_min -= deltax/5;
+        for(int i=0;i<featuresUnclustered.rows;i++){
+            Mat feature_i = featuresUnclustered.row(i);
+            int x = feature_i.dot(x_vector);
+            int y = feature_i.dot(y_vector);
+            Scalar color(255, 255, 255);
+            if(classesUnclustered.at(i) == 1)
+                color = Scalar(255,0, 0);
+            else if(classesUnclustered.at(i) == 2)
+                color = Scalar(0, 255, 0);
+			else if(classesUnclustered.at(i) == 3)
+                color = Scalar(0, 0, 255);
+			Point p;
+			if(deltax !=0)
+				p.x=(int)height*(x-x_min)/(x_max-x_min);
+			else
+				p.x=height/2 ;
+			if(deltay !=0)
+				p.y=(int)width*(y-y_min)/(y_max-y_min) ;
+			else
+				p.y=width/2 ;
+            circle(planePCA,p, 5, color);
+			cout << "Point : " << p.x << " - " << p.y << " classe " << classesUnclustered.at(i) << endl ;
+
+        }
+        imshow("PCA " + title, planePCA);
+        waitKey();
+	}
+}
+
+pair<Mat,Mat> computePCA(Mat featuresUnclustered,int nb_coponents){
+    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+    Mat eigenvectors = principalCA.eigenvectors.clone();
+	Mat principalVectors = Mat(nb_coponents , eigenvectors.cols,CV_32FC1);
+	Mat mean = principalCA.mean.clone() ;
+
+	cout << "Mean size : " << mean.size() << endl ;
+    for(int j=0;j<nb_coponents;j++){
+		principalVectors.row(j) = eigenvectors.row(j) ;
+	}
+	return pair<Mat,Mat>(principalVectors.t(),mean) ;
+}

@@ -1,4 +1,5 @@
 #include "faceDetection.h"
+#include "tools.h"
 #include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -345,3 +346,187 @@ vector<Rect> detectNose(CascadeClassifier nose_classifier, Mat frame )
     return nose;
 }
 
+void extractCroppedDescriptor(int n, int m , bool verbose){
+	// n = 168 m = 192
+	String dir_data = "../data/cropped" ;
+	Mat descriptors;
+	vector<int> classes ;
+
+	int classe = 0 ;
+	//Images to extract feature descriptors and build the vocabulary
+	for (directory_iterator it1(dir_data); it1 != directory_iterator() ; it1++){
+		path p = it1->path() ;
+		for(directory_iterator it2(p); it2 != directory_iterator(); it2 ++){
+			cout << it2->path() << endl ;
+			path p2 = it2->path() ;
+			if(is_regular_file(it2->status())){
+				// Loading file
+				Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
+				cout << input.type() << endl ;
+				Mat inputbis ;
+				resize(input,inputbis,Size(n,m)) ;
+				if(verbose){
+					imshow("input",input) ;
+					imshow("resized",inputbis) ;
+					waitKey() ;
+				}
+				cout << input.size() << endl ;
+				int l = inputbis.rows *inputbis.cols ;
+				cout << l << endl ;
+				Mat rowDes = Mat::zeros(1,l,CV_8U) ;
+				//cout << rowDes.size()  << endl ;
+				//cout << input << endl << endl ;
+				for (int y=0;y<inputbis.rows;y++){
+					for(int x=0;x< inputbis.cols;x++){
+						rowDes.at<uchar>(0,y*inputbis.cols +x) = inputbis.at<uchar>(y,x) ;
+					}
+				}
+				//cout << rowDes << endl << endl ;
+				descriptors.push_back(rowDes) ;
+				classes.push_back(classe) ;
+			}		
+		}
+		classe ++ ;
+	}
+
+	FileStorage f(("../allFeatures/cropped/face_descriptors.yml"), FileStorage::WRITE);
+	f << "descriptors" << descriptors;
+	f << "classes" << classes;
+	f.release();
+
+	ofstream fout("../allFeatures/cropped/face_descriptors.csv");
+
+    if(!fout)
+    {
+        cout<<"File Not Opened"<<endl;  return;
+    }
+
+    for(int i=0; i<descriptors.rows; i++)
+    {
+		fout<<classes[i] <<",";
+        for(int j=0; j<descriptors.cols; j++)
+        {
+            fout<<( (int) descriptors.at<uchar>(i,j) )<<",";
+        }
+        fout<<endl;
+    }
+
+    fout.close();
+}
+
+
+void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]){
+	Mat descriptors ;
+	FileStorage f(("../allFeatures/cropped/face_descriptors.yml"), FileStorage::READ);
+	f["descriptors"] >> descriptors;
+	f.release();
+
+	Mat descriptorsFloat ;
+	descriptors.convertTo(descriptorsFloat,CV_32FC1) ;
+
+	PCA facePCA(descriptorsFloat, Mat(), CV_PCA_DATA_AS_ROW, nb_components);
+	
+	Mat vec0 = descriptorsFloat.row(0).clone() ;	
+	Mat vec0bis ;
+	Mat short_face ;
+	facePCA.project( vec0,short_face) ;
+	facePCA.backProject(short_face,vec0bis) ;
+	
+	cout << facePCA.eigenvectors.size() << endl ;
+	Mat vec1 = facePCA.eigenvectors.row(0).clone() ;
+	Mat vec1short = Mat::zeros(1,n*m,CV_32FC1) ;
+
+	Mat vecTest = Mat::zeros(1,n*m,CV_32FC1) ;
+	for(int x = 0 ; x < 20000 ; x++){
+		vecTest.at<float>(0,rankedFeatures[x]) = vec0.at<float>(0,rankedFeatures[x]) ;
+		vec1short.at<float>(0,rankedFeatures[x]) = vec1.at<float>(0,rankedFeatures[x]) ;
+	}
+	Mat vec1bis ;
+	facePCA.project( vec1short,vec1bis) ;
+	facePCA.backProject(vec1bis,vec1short) ;
+
+	Mat vbis ;
+	facePCA.project( vecTest,vbis) ;
+	facePCA.backProject(vbis,vecTest) ;
+
+	Mat face0 =  Mat(m,n,CV_32FC1); ;	
+	Mat face0bis =  Mat(m,n,CV_32FC1); 
+	Mat face1 =  Mat(m,n,CV_32FC1); 
+	Mat faceTest = Mat(m,n,CV_32FC1); 
+	/*for (int i=0 ; i< m*n; i++){
+		int x = i/m ;
+		int y = i-x*m ;
+		face0bis.at<uchar>(y,x) = vec0bis.at<uchar>(0,i) ;
+		face0.at<uchar>(y,x) = vec0.at<uchar>(0,i) ;
+	}*/
+	for (int y=0;y<face0.rows;y++){
+		for(int x=0;x< face0.cols;x++){
+			face0.at<float>(y,x) = vec0.at<float>(0,y*n + x) ;
+			face0bis.at<float>(y,x) = vec0bis.at<float>(0,y*n + x) ;
+			face1.at<float>(y,x) = vec1short.at<float>(0,y*n + x) ;
+			faceTest.at<float>(y,x) = vecTest.at<float>(0,y*n + x) ;
+		}
+	}
+
+	Mat face0converted , face0bisU , face1U , testU;
+	face0.convertTo(face0converted,CV_8U) ;
+	face0bis.convertTo(face0bisU,CV_8U) ;
+	face1.convertTo(face1U,CV_8U) ;
+	faceTest.convertTo(testU,CV_8U) ;
+	
+	imshow("face1",face1U) ;
+	imshow("test",testU) ;
+	imshow("face0",face0converted) ;
+	imshow("face0 bis",face0bisU) ;
+	waitKey() ;
+}
+
+
+void showSelectedFacesFeatures(int n, int m, int nb_feats, string nb, int rankedFeatures[]){
+	Mat face = Mat(m,n,CV_32FC1);
+	int strength = nb_feats ;
+	cout << nb_feats << endl ;
+
+	int j = 0 ;
+	for (int i=0 ; i< n*m; i++){
+		int feat = rankedFeatures[i] ;
+		int y = feat/n ;
+		int x = feat-y*n ;
+		face.at<float>(y,x) = strength ;
+		//cout << x << " " << y << endl ;
+		j++ ;
+		/*
+		if(j>800){
+			strength ++ ;
+			j=0 ;		
+		}*/
+		if(strength >0)
+			strength -- ;
+	}
+	
+	ofstream fout("../allFeatures/cropped/face.csv");
+
+    if(!fout)
+    {
+        cout<<"File Not Opened"<<endl;  return;
+    }
+
+    for(int i=0; i<face.rows; i++)
+    {
+        for(int j=0; j<face.cols; j++)
+        {
+            fout<<( (int) face.at<float>(i,j) )<<",";
+        }
+        fout<<endl;
+    }
+
+    fout.close();
+
+
+	Mat A ;
+	face.convertTo(A, CV_8U, 255.0/nb_feats, 0.);
+
+	//cout << A << endl ;
+	imshow("ranked features "+ nb,A) ;
+	waitKey() ;
+}
