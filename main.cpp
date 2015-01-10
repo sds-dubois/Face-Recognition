@@ -80,7 +80,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* chosir completeDetection == true pour intuiter un deuxieme oeil lorsque cela est possible
 	*/
-	//featureExtraction(database,goodCols,false,true) ;
+	featureExtraction(database,goodCols,false,1) ;
 
 	map<int,string> names ;
 	names.insert(pair<int,string>(0,"yaleB20"));
