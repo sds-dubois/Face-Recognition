@@ -8,11 +8,11 @@ In this project, there are multiple challenges :
 - represent features in a vector space
 - create classifiers
 
-Functions to run only in debug mode :
-  classifyAndPredict (still fast)
-  classifyAndPredictSingleDescriptor (still fast)
-  createBowClassifier (very slow)
-  computeBowTestDesciptors
+    Functions to run only in debug mode :
+- classifyAndPredict (still fast)
+- classifyAndPredictSingleDescriptor (still fast)
+- createBowClassifier (very slow)
+- computeBowTestDesciptors
 
     Directory Structure
 
@@ -20,4 +20,3 @@ data
   The images on which to train and test the program
 stats
   Some statistics on the position and size of eyes, nose, and mouth in a face
-
