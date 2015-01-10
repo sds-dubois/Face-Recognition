@@ -506,6 +506,10 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 		f << "classes_nose" << classesUnclustered_nose;
 		f << "nose" << noseFeaturesUnclustered;
 		f << "featureDetails" << featureDetails ;
+		for(int i=0;i<index;i++){
+			f << ("name" + to_string(i)) << names[i] ;
+		}
+		f << "nb_people" << index ;
 		f.release();
 
 		FileStorage ff((dir_allFeatures[k]+fn), FileStorage::READ);
