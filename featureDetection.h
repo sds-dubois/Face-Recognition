@@ -21,7 +21,7 @@ using namespace cv ;
 void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodCols,bool verbose) ;
 
 // extracts SIFT descriptors for each zone and store them
-void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose,bool completeDetection) ;
+void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose, int detectionType) ;
 
 void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
 
@@ -29,10 +29,10 @@ void initClassification(map<int,string> names ,int nb_coponents,String db , vect
 void predictPCA(String database,vector<vector<int> > goodCols) ;
 
 // use PCA reduction & a classifier by zone
-void predictPCA2(String database,vector<vector<int> > goodCols,bool completeDetection) ;
+void predictPCA2(String database,vector<vector<int> > goodCols, int detectionType) ;
 
 // use only one descriptor for all zones, and fill with zeros when a zone is not detected
 void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
 
 // the best to use
-void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
+void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid) ;

@@ -185,10 +185,10 @@ int detectFacesWebcam(){
 }
 
 void showFaces(string file){
-	CascadeClassifier face_classifier = getFaceCascadeClassifier();	
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
 	Mat input = imread(file, CV_LOAD_IMAGE_GRAYSCALE);
-	
-	vector<Rect> faces = detectFaces(face_classifier, input); 
+
+	vector<Rect> faces = detectFaces(face_classifier, input);
 	if(faces.size() != 0){
 		rectangle(input,faces.front(),Scalar(0,0,255),1,8,0) ;
 		imshow("face",input) ;
@@ -264,12 +264,12 @@ vector<Rect> detectEye(CascadeClassifier eye_classifier, Mat frame )
 }
 
 void showLeftRightEyes(string filename){
-	CascadeClassifier lefteye_classifier = getEyeLeftCascadeClassifier();	
-	CascadeClassifier righteye_classifier = getEyeRightCascadeClassifier();	
+	CascadeClassifier lefteye_classifier = getEyeLeftCascadeClassifier();
+	CascadeClassifier righteye_classifier = getEyeRightCascadeClassifier();
 	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-	
-	vector<Rect> lefteyes = detectEye(lefteye_classifier, input); 
-	vector<Rect> righteyes = detectEye(righteye_classifier, input); 
+
+	vector<Rect> lefteyes = detectEye(lefteye_classifier, input);
+	vector<Rect> righteyes = detectEye(righteye_classifier, input);
 	if(lefteyes.size() != 0){
 		cout << "Nombre d'oeils gauches : " << lefteyes.size() << endl ;
 		rectangle(input,lefteyes.front(),Scalar(0,255,0),1,8,0) ;
@@ -285,10 +285,10 @@ void showLeftRightEyes(string filename){
 }
 
 bool showEyes(string filename,bool verbose){
-	CascadeClassifier eye_classifier = getEyesCascadeClassifier();	
+	CascadeClassifier eye_classifier = getEyesCascadeClassifier();
 	Mat input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 	bool res = false ;
-	vector<Rect> eyes = detectEye(eye_classifier, input); 
+	vector<Rect> eyes = detectEye(eye_classifier, input);
 	if(eyes.size() != 0){
 		cout << "Nombre d'oeils : " << eyes.size() << endl ;
 		if(eyes.size() > 1)
@@ -384,7 +384,7 @@ void extractCroppedDescriptor(int n, int m , bool verbose){
 				//cout << rowDes << endl << endl ;
 				descriptors.push_back(rowDes) ;
 				classes.push_back(classe) ;
-			}		
+			}
 		}
 		classe ++ ;
 	}
@@ -413,6 +413,32 @@ void extractCroppedDescriptor(int n, int m , bool verbose){
 
     fout.close();
 }
+bool enhanceDetection(Rect face, vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose, int detectionType){
+    if(keypoints_eyes.size() == 1 && keypoints_mouth.size() > 0 && keypoints_nose.size() > 0 && detectionType == 1){
+        Point2f centerNose = keypoints_nose[0].pt;
+        Point2f centerMouth = keypoints_mouth[0].pt;
+        Point2f centerEye = keypoints_eyes[0].pt;
+        Point2f mouthNoseVector = centerNose - centerMouth;
+        mouthNoseVector = (1/norm(mouthNoseVector))*mouthNoseVector;
+        float algebraicDistance = mouthNoseVector.ddot(centerEye - centerMouth);
+        Point H = centerMouth + algebraicDistance*mouthNoseVector;
+        Point2f centerEye2 = 2*H;
+        centerEye2 -= centerEye;
+        KeyPoint eye2(keypoints_eyes[0]);
+        eye2.pt = centerEye2;
+        keypoints_eyes.push_back(eye2);
+    }
+    else if(keypoints_eyes.size() == 0 && keypoints_mouth.size() == 0 && keypoints_nose.size() == 0 && detectionType == 1){
+        KeyPoint eye1(face.x+0.2*face.width, face.y+0.57*face.height, 0.4*sqrt(face.area()), 0.0);
+        KeyPoint eye2(face.x+0.6*face.width, face.y+0.57*face.height, 0.4*sqrt(face.area()), 0.0);
+        keypoints_eyes.push_back(eye1);
+        keypoints_eyes.push_back(eye2);
+    }
+    else if(keypoints_eyes.size() == 1){
+        keypoints_eyes.clear();
+    }
+    return false;
+}
 
 
 void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]){
@@ -425,13 +451,13 @@ void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]){
 	descriptors.convertTo(descriptorsFloat,CV_32FC1) ;
 
 	PCA facePCA(descriptorsFloat, Mat(), CV_PCA_DATA_AS_ROW, nb_components);
-	
-	Mat vec0 = descriptorsFloat.row(0).clone() ;	
+
+	Mat vec0 = descriptorsFloat.row(0).clone() ;
 	Mat vec0bis ;
 	Mat short_face ;
 	facePCA.project( vec0,short_face) ;
 	facePCA.backProject(short_face,vec0bis) ;
-	
+
 	cout << facePCA.eigenvectors.size() << endl ;
 	Mat vec1 = facePCA.eigenvectors.row(0).clone() ;
 	Mat vec1short = Mat::zeros(1,n*m,CV_32FC1) ;
@@ -449,10 +475,10 @@ void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]){
 	facePCA.project( vecTest,vbis) ;
 	facePCA.backProject(vbis,vecTest) ;
 
-	Mat face0 =  Mat(m,n,CV_32FC1); ;	
-	Mat face0bis =  Mat(m,n,CV_32FC1); 
-	Mat face1 =  Mat(m,n,CV_32FC1); 
-	Mat faceTest = Mat(m,n,CV_32FC1); 
+	Mat face0 =  Mat(m,n,CV_32FC1); ;
+	Mat face0bis =  Mat(m,n,CV_32FC1);
+	Mat face1 =  Mat(m,n,CV_32FC1);
+	Mat faceTest = Mat(m,n,CV_32FC1);
 	/*for (int i=0 ; i< m*n; i++){
 		int x = i/m ;
 		int y = i-x*m ;
@@ -473,7 +499,7 @@ void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]){
 	face0bis.convertTo(face0bisU,CV_8U) ;
 	face1.convertTo(face1U,CV_8U) ;
 	faceTest.convertTo(testU,CV_8U) ;
-	
+
 	imshow("face1",face1U) ;
 	imshow("test",testU) ;
 	imshow("face0",face0converted) ;
@@ -498,12 +524,12 @@ void showSelectedFacesFeatures(int n, int m, int nb_feats, string nb, int ranked
 		/*
 		if(j>800){
 			strength ++ ;
-			j=0 ;		
+			j=0 ;
 		}*/
 		if(strength >0)
 			strength -- ;
 	}
-	
+
 	ofstream fout("../allFeatures/cropped/face.csv");
 
     if(!fout)

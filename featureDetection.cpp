@@ -22,7 +22,7 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem ;
 
-#define selectFeatures  false 
+#define selectFeatures  false
 #define pca false
 #define nb_celebrities 3
 
@@ -314,7 +314,7 @@ void buildPCAreducer(int nb_coponents,String db , vector<vector<int> > goodCols 
 	*/
 }
 
-void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,bool completeDetection){
+void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose, int detectionType){
 
 	String dir_labeled_data = "../data/" + db + "/labeled" ;
 	String dir_unlabeled_data = "../data/" + db + "/unlabeled" ;
@@ -385,20 +385,20 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 					float alpha =0 ;
 					vector<KeyPoint> keypoints_eyes;
 					if(faces.size() >= 1){
+						searchZone = faces[0] ;
 						if(faces.size() > 1){
 							searchZone = selectBestFace(input, faces);
 							cout << "Attention : plus d'un visage detecte" << endl ;
 						}
-						searchZone = faces[0] ;
 						if(verbose){
 							rectangle(input,searchZone,Scalar(0,255,0),1,8,0) ;
 							imshow("face",input) ;
 							waitKey() ;
 						}
-						Rect searchEyeZone = faces[0] ;
+						Rect searchEyeZone = searchZone;
 						searchEyeZone.height /= 2 ;
 						keypoints_eyes = getSiftOnEyes2(input,searchEyeZone,eyes_classifier,detector,alpha,verbose);
-						Rect searchMouthZone = faces[0] ;
+						Rect searchMouthZone = searchZone;
 						searchMouthZone.height /= 2 ;
 						searchMouthZone.y += searchMouthZone.height ;
 						keypoints_mouth = getSiftOnMouth(input,searchMouthZone,mouth_classifier,detector,alpha,verbose);
@@ -410,7 +410,19 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 							keypoints_mouth[0].angle = alpha;
 							keypoints_nose[0].angle = alpha;
 						}
-						enhanceDetection(keypoints_eyes, keypoints_mouth, keypoints_nose,completeDetection);
+                        bool result = enhanceDetection(searchZone, keypoints_eyes, keypoints_mouth, keypoints_nose,detectionType);
+						if(result){
+                            Mat img_with_sift;
+                            if(keypoints_eyes.size() > 0)
+                                drawKeypoints(input,keypoints_eyes,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+                            if(keypoints_nose.size() > 0)
+                                drawKeypoints(input,keypoints_nose,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+                            if(keypoints_mouth.size() > 0)
+                                drawKeypoints(input,keypoints_mouth,img_with_sift,Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+                            rectangle(img_with_sift,searchZone,Scalar(0,255,0),1,8,0) ;
+                            imshow("Eyes",img_with_sift) ;
+                            waitKey() ;
+                        }
 
 					}
 					else{
@@ -493,7 +505,7 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 		writeMatToFile(noseFeaturesUnclustered,classesUnclustered_nose,((dir_allFeatures[k])+"/nose_features.csv")) ;
 
 		String fn;
-		if(completeDetection)
+		if(detectionType == 1)
 			fn = "/all_completed.yml" ;
 		else
 			fn = "/all.yml" ;
@@ -934,7 +946,7 @@ void predictPCA(String db,vector<vector<int> > goodCols){
 	}
 }
 
-void predictPCA2(String db,vector<vector<int> > goodCols,bool completeDetection){
+void predictPCA2(String db,vector<vector<int> > goodCols, int detectionType){
 
 	String dir_leye_classifiers = "../classifiers/" + db + "/leye" ;
 	String dir_reye_classifiers = "../classifiers/" + db + "/reye";
@@ -1102,7 +1114,7 @@ void predictPCA2(String db,vector<vector<int> > goodCols,bool completeDetection)
                             keypoints_mouth[0].angle = alpha;
                             keypoints_nose[0].angle = alpha;
                         }
-                        enhanceDetection(keypoints_eyes, keypoints_mouth, keypoints_nose,completeDetection);
+                        enhanceDetection(searchZone, keypoints_eyes, keypoints_mouth, keypoints_nose,detectionType);
 
 					}
 					else{
@@ -1194,7 +1206,7 @@ void predictPCA2(String db,vector<vector<int> > goodCols,bool completeDetection)
 }
 
 
-void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid){
+void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid){
 
 	String dir_allFeatures_training = "../allFeatures/" + db + "/training";
 	String dir_allFeatures_test = "../allFeatures/" + db + "/test" ;
@@ -1217,7 +1229,7 @@ void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCo
 	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered,featureDetailsTraining;
 	vector<int> classesUnclustered_eye,classesUnclustered_nose,classesUnclustered_mouth ;
 	String fn ;
-	if(completeDetection)
+	if(detectionType == 1)
 		fn = "/all_completed.yml" ;
 	else
 		fn = "/all_simple.yml" ;
@@ -1455,7 +1467,7 @@ void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCo
 	}
 	cout << "nbr oeils " << i << endl ;
 	*/
-	for(int k =0; k<2;k++){ 
+	for(int k =0; k<2;k++){
 		int eye_counter =0 ; int mouth_counter = 0 ; int nose_counter = 0;
 		int nb_images[nb_celebrities] ;
 		int nb_error[nb_celebrities] ;
@@ -1734,7 +1746,7 @@ void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,
 	string celebrityName ;
 	map<string,pair<int,int> > results[2] ;
 
-	for(int k =0; k<2;k++){ 
+	for(int k =0; k<2;k++){
 		eye_counter =0 ; mouth_counter = 0 ; nose_counter = 0;
 		int nb_images[nb_celebrities] ;
 		int nb_error[nb_celebrities] ;
