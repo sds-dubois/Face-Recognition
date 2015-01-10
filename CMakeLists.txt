@@ -6,6 +6,7 @@ PROJECT(Projet552)
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_DEBUG_RUNTIME ON)
+SET(CMAKE_CXX_FLAGS "-std=c++0x")
 FIND_PACKAGE( Boost COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
