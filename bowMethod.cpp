@@ -550,7 +550,7 @@ int createBowClassifier(string db) {
  		cout << " -- Traite : " << celebrityName << endl ;
  		Mat samples(0,dictionary.rows,CV_32FC1) ;
  		counter = 0 ;
- 		for(directory_iterator it2(p); it2 != directory_iterator() ; it2 ++){
+ 		for(directory_iterator it2(p); it2 != directory_iterator(); it2 ++){
  			path p2 = it2->path() ;
  			if(is_regular_file(it2->status())){
                  // Load the image
@@ -599,14 +599,8 @@ int createBowClassifier(string db) {
 	f << "classes" << classes ;
  	f.release();
 
- 	CvSVMParams params;
-     params.svm_type    = CvSVM::C_SVC;
- 	params.kernel_type = CvSVM::POLY;
- 	params.degree = 3 ;
- 	params.gamma =  5;
- 	params.coef0 = 1 ;
-     params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
- 	
+ 	CvSVMParams params = chooseSVMParams() ;
+
  	Mat labels,temp ;
  	string fname ;
  
@@ -634,7 +628,7 @@ int createBowClassifier(string db) {
  		else
  			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
  
- 		fname = "../classifiers/bow" + db +"/" + names[x] + ".yml";
+ 		fname = "../classifiers/" + db +"/bow/" + names[x] + ".yml";
  		cout << "Store : " << fname << endl ;
  		classifier.save(fname.c_str()) ;
  		cout << "Stored" << endl ;
@@ -743,12 +737,12 @@ void bowPredict(string db){
 	Mat test_descriptor,training_descriptor;
 	vector<int> test_classes,training_classes;
 
-	FileStorage ftest(("../allFeatures/" + db + "/bow_test.yml"), FileStorage::WRITE);
+	FileStorage ftest(("../allFeatures/" + db + "/bow_test.yml"), FileStorage::READ);
 	ftest["descriptors"] >> test_descriptor;
 	ftest["classes"] >> test_classes ;
  	ftest.release();
 
-	FileStorage ftraining(("../allFeatures/" + db + "/bow_training.yml"), FileStorage::WRITE);
+	FileStorage ftraining(("../allFeatures/" + db + "/bow_training.yml"), FileStorage::READ);
 	ftraining["descriptors"] >> training_descriptor;
 	ftraining["classes"] >> training_classes ;
  	ftraining.release();
@@ -756,7 +750,7 @@ void bowPredict(string db){
 	CvSVM classifiers[nb_celebrities] ;
 	String celebrities[nb_celebrities] ;
  	int index = 0 ;
- 	for (directory_iterator it("../classifiers/bow/"+db); it != directory_iterator() ; it++) { 
+ 	for (directory_iterator it("../classifiers/"+db+"/bow"); it != directory_iterator() ; it++) { 
  		path p = it->path() ;
  		if(is_regular_file(it->status())){
  			classifiers[index].load(p.string().c_str()) ;

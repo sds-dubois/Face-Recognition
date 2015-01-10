@@ -731,92 +731,7 @@ void initClassification(map<int,string> names ,int nb_coponents,String db , vect
 	fss3.release();
 }
 
-void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title){
-	cout << "Nbr classes : " << featuresUnclustered.rows << endl ;
-	int num_components = 10;
-    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, num_components);
-    Mat mean = principalCA.mean.clone();
-    Mat eigenvectors = principalCA.eigenvectors.clone();
 
-    for(int j=0;j<num_components/2;j++){
-        Mat x_vector = eigenvectors.row(j);
-        Mat y_vector = eigenvectors.row(j+1);
-
-        float x_max,y_max,x_min, y_min;
-        bool init=true;
-
-        int width = 400;
-        int height = 1200;
-        Mat planePCA = Mat::zeros(width, height, CV_8UC3);
-        for(int i=0;i<featuresUnclustered.rows;i++){
-            Mat feature_i = featuresUnclustered.row(i);
-            int x = feature_i.dot(x_vector);
-            int y = feature_i.dot(y_vector);
-
-            if(init){
-                x_max = x;
-                x_min = x;
-                y_min = y;
-                y_max = y;
-                init=false;
-            }
-
-            if(x > x_max)
-                x_max = x;
-            if(x<x_min)
-                x_min = x;
-            if(y < y_min)
-                y_min = y;
-            if(y > y_max)
-                y_max = y;
-        }
-        float deltay = y_max - y_min;
-        y_max += deltay/5;
-        y_min -= deltay/5;
-        float deltax = x_max-x_min;
-        x_max += deltax/5;
-        x_min -= deltax/5;
-        for(int i=0;i<featuresUnclustered.rows;i++){
-            Mat feature_i = featuresUnclustered.row(i);
-            int x = feature_i.dot(x_vector);
-            int y = feature_i.dot(y_vector);
-            Scalar color(255, 255, 255);
-            if(classesUnclustered.at(i) == 1)
-                color = Scalar(255,0, 0);
-            else if(classesUnclustered.at(i) == 2)
-                color = Scalar(0, 255, 0);
-			else if(classesUnclustered.at(i) == 3)
-                color = Scalar(0, 0, 255);
-			Point p;
-			if(deltax !=0)
-				p.x=(int)height*(x-x_min)/(x_max-x_min);
-			else
-				p.x=height/2 ;
-			if(deltay !=0)
-				p.y=(int)width*(y-y_min)/(y_max-y_min) ;
-			else
-				p.y=width/2 ;
-            circle(planePCA,p, 5, color);
-			cout << "Point : " << p.x << " - " << p.y << " classe " << classesUnclustered.at(i) << endl ;
-
-        }
-        imshow("PCA " + title, planePCA);
-        waitKey();
-	}
-}
-
-pair<Mat,Mat> computePCA(Mat featuresUnclustered,int nb_coponents){
-    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
-    Mat eigenvectors = principalCA.eigenvectors.clone();
-	Mat principalVectors = Mat(nb_coponents , eigenvectors.cols,CV_32FC1);
-	Mat mean = principalCA.mean.clone() ;
-
-	cout << "Mean size : " << mean.size() << endl ;
-    for(int j=0;j<nb_coponents;j++){
-		principalVectors.row(j) = eigenvectors.row(j) ;
-	}
-	return pair<Mat,Mat>(principalVectors.t(),mean) ;
-}
 
 
 void predictPCA(String db,vector<vector<int> > goodCols){
@@ -1622,6 +1537,285 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 
 	cout << "Resultats : " << endl ;
 
+
+	for (int k=0;k<nb_celebrities;k++){
+		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
+		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+	}
+
+	ofstream fout("../results.yml");
+	for (int k=0;k<nb_celebrities;k++){
+		fout << celebrities[k] << "_unlabeled" << " : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl ;
+	}
+	fout.close();
+
+}
+
+void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid){
+
+	String dir_allFeatures_training = "../allFeatures/" + db + "/training";
+	String dir_allFeatures_test = "../allFeatures/" + db + "/test" ;
+
+	String dir_single_classifier = "../classifiers/" + db + "/single" ;
+
+	CascadeClassifier face_classifier = getFaceCascadeClassifier();
+	CascadeClassifier eyes_classifier = getEyesCascadeClassifier();
+    CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
+    CascadeClassifier nose_classifier = getNoseCascadeClassifier();
+	CvSVM classifiers[nb_celebrities] ;
+	String celebrities[nb_celebrities] ;
+
+	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered,featureDetailsTraining;
+	vector<int> classesUnclustered_eye,classesUnclustered_nose,classesUnclustered_mouth ;
+	String fn ;
+	if(completeDetection)
+		fn = "/all_completed.yml" ;
+	else
+		fn = "/all.yml" ;
+	FileStorage f((dir_allFeatures_training+fn), FileStorage::READ);
+	f["classes_eye"] >> classesUnclustered_eye;
+	f["leye"] >> leyeFeaturesUnclustered;
+	f["reye"] >> reyeFeaturesUnclustered;
+	f["classes_mouth"] >> classesUnclustered_mouth;
+	f["mouth"] >> mouthFeaturesUnclustered;
+	f["classes_nose"] >> classesUnclustered_nose;
+	f["nose"] >> noseFeaturesUnclustered;
+	f["featureDetails"] >> featureDetailsTraining ;
+	f.release();
+
+	Mat leyeFeaturesTest,reyeFeaturesTest,mouthFeaturesTest,noseFeaturesTest,featureDetailsTest;
+	vector<int> classesTest_eye,classesTest_nose,classesTest_mouth ;
+	FileStorage ff((dir_allFeatures_test+fn), FileStorage::READ);
+	ff["classes_eye"] >> classesTest_eye;
+	ff["leye"] >> leyeFeaturesTest;
+	ff["reye"] >> reyeFeaturesTest;
+	ff["classes_mouth"] >> classesTest_mouth;
+	ff["mouth"] >> mouthFeaturesTest;
+	ff["classes_nose"] >> classesTest_nose;
+	ff["nose"] >> noseFeaturesTest;
+	ff["featureDetails"] >> featureDetailsTest ;
+	ff.release();
+
+	PCA leye_pca,reye_pca,nose_pca,mouth_pca;
+	leye_pca(selectCols(goodCols[0],leyeFeaturesUnclustered), Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+	reye_pca(selectCols(goodCols[1],reyeFeaturesUnclustered), Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+	nose_pca(selectCols(goodCols[3],noseFeaturesUnclustered), Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+	mouth_pca(selectCols(goodCols[2],mouthFeaturesUnclustered), Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
+
+	map<int,Mat> training_set ;
+	int eye_counter =0 ; int mouth_counter = 0 ; int nose_counter = 0;
+
+	for(int pic_counter =0 ; pic_counter < featureDetailsTraining.rows ; pic_counter++){
+		int classe = featureDetailsTraining.at<uchar>(pic_counter,0) ;
+		Mat full_descriptor = Mat::zeros(1,4*nb_coponents,CV_32FC1) ;
+		if(featureDetailsTraining.at<uchar>(pic_counter,1) == 1){
+			if(eye_counter >= leyeFeaturesUnclustered.rows || eye_counter >= reyeFeaturesUnclustered.rows)
+				cout << "Attention eye_counter trop grand" << endl ;
+			else{
+				Mat descriptorLEye, descriptorREye;
+				descriptorLEye = leyeFeaturesUnclustered.row(eye_counter).clone() ;
+				descriptorREye = reyeFeaturesUnclustered.row(eye_counter).clone() ;
+				Mat leye_samples = leye_pca.project(selectCols(goodCols[0],descriptorLEye));
+				Mat reye_samples = reye_pca.project(selectCols(goodCols[1],descriptorREye));
+				for (int i=0;i< nb_coponents;i++){
+					full_descriptor.at<float>(0,i) = leye_samples.at<float>(0,i) ;
+					full_descriptor.at<float>(0,i+nb_coponents) = reye_samples.at<float>(0,i) ;
+				}
+ 			}
+			eye_counter ++ ;
+		}
+		if(featureDetailsTraining.at<uchar>(pic_counter,2) == 1){
+			if(mouth_counter >= mouthFeaturesUnclustered.rows)
+				cout << "Attention mouth_counter trop grand" << endl ;
+			else{
+				Mat descriptorMouth = mouthFeaturesUnclustered.row(mouth_counter).clone() ;
+				Mat mouth_sample = mouth_pca.project(selectCols(goodCols[2],descriptorMouth)) ;
+				for (int i=0;i< nb_coponents;i++){
+					full_descriptor.at<float>(0,i+2*nb_coponents) = mouth_sample.at<float>(0,i) ;
+				}
+ 			}
+			mouth_counter ++ ;
+
+		}
+		if(featureDetailsTraining.at<uchar>(pic_counter,3) == 1){
+			if(nose_counter >= noseFeaturesUnclustered.rows)
+				cout << "Attention nose_counter trop grand" << endl ;
+			else{
+				Mat descriptorNose = noseFeaturesUnclustered.row(nose_counter).clone() ;
+				Mat nose_sample = mouth_pca.project(selectCols(goodCols[2],descriptorNose)) ;
+				for (int i=0;i< nb_coponents;i++){
+					full_descriptor.at<float>(0,i+2*nb_coponents) = nose_sample.at<float>(0,i) ;
+				}
+ 			}
+			nose_counter ++ ;
+		}
+		training_set[classe].push_back(full_descriptor);
+	}
+
+	CvSVMParams params = chooseSVMParams() ;
+	vector<CvParamGrid> grids = chooseSVMGrids() ;
+	int k_fold = 3 ;
+
+	string fname ;
+
+	for (int x=0;x<nb_celebrities;x++){
+		Mat samples(0,nb_coponents,CV_32FC1) ;
+		int counter = 0 ;
+
+		for(int y=0;y<nb_celebrities;y++){
+			if(y != x){
+				samples.push_back(training_set[y]) ;
+				counter += training_set[y].rows ;
+			}
+		}
+		samples.push_back(training_set[x]) ;
+
+		Mat labels = Mat::zeros(counter,1,CV_32FC1) ;
+		Mat temp = Mat::ones(training_set[x].rows,1,CV_32FC1) ;
+		labels.push_back(temp);
+
+		CvSVM classifier ;
+		Mat samples_32f;
+		samples.convertTo(samples_32f, CV_32F);
+
+		if(samples.rows != 0){
+			if(!cross_valid){
+				classifier.train(samples_32f,labels,Mat(),Mat(),params);
+			}
+			else{
+				classifier.train_auto(samples_32f,labels,Mat(),Mat(),params,k_fold,grids[0],grids[1],grids[2],grids[3],grids[4],grids[5],false);
+			}
+
+		}
+		else
+			cout << "Le classifieur pour " <<  names[x] << " n'a pas pu etre construit" << endl ;
+
+		fname = dir_single_classifier + "/"+ names[x] + ".yml";
+		cout << "Store : " << fname << endl ;
+		classifier.save(fname.c_str()) ;
+	}
+
+	cout << "Classifieurs crees" << endl ;
+
+	int index = 0 ;
+	for (directory_iterator it(dir_single_classifier); it != directory_iterator() ; it++) {
+		path p = it->path() ;
+		if(is_regular_file(it->status())){
+			classifiers[index].load(p.string().c_str()) ;
+			celebrities[index] = p.stem().string() ;
+			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
+			index ++ ;
+		}
+	}
+
+	if(index != nb_celebrities)
+		cout << "Erreur : il y a un nombre différent de classifieurs et de celebrites" << endl ;
+
+	cout << "Classifieurs charges" << endl ;
+
+	string celebrityName ;
+	map<string,pair<int,int> > results[2] ;
+
+	for(int k =0; k<2;k++){ 
+		eye_counter =0 ; mouth_counter = 0 ; nose_counter = 0;
+		int nb_images[nb_celebrities] ;
+		int nb_error[nb_celebrities] ;
+		for(int x=0; x < nb_celebrities; x++){
+			nb_error[x] = 0;
+			nb_images[x] = 0;
+		}
+		Mat featureDetails,leyeFeatures,reyeFeatures,mouthFeatures,noseFeatures ;
+		if(k==0){
+			featureDetails = featureDetailsTest ;
+			leyeFeatures = leyeFeaturesTest ;
+			reyeFeatures = reyeFeaturesTest ;
+			mouthFeatures = mouthFeaturesTest ;
+			noseFeatures = noseFeaturesTest ;
+		}
+		else{
+			featureDetails = featureDetailsTraining  ;
+			leyeFeatures = leyeFeaturesUnclustered ;
+			reyeFeatures = reyeFeaturesUnclustered ;
+			mouthFeatures = mouthFeaturesUnclustered ;
+			noseFeatures = noseFeaturesUnclustered ;
+		}
+		for(int pic_counter =0 ; pic_counter < featureDetails.rows ; pic_counter++){
+			int classe = featureDetails.at<uchar>(pic_counter,0) ;
+			Mat full_descriptor = Mat::zeros(1,4*nb_coponents,CV_32FC1) ;
+			celebrityName = names[classe] ;
+			float prediction[nb_celebrities] ;
+			for(int x=0; x < nb_celebrities; x++){
+				prediction[x] = 0;
+			}
+			if(featureDetails.at<uchar>(pic_counter,1) == 1){
+				if(eye_counter >= leyeFeatures.rows || eye_counter >= reyeFeatures.rows)
+					cout << "Attention eye_counter trop grand" << endl ;
+				else{
+					Mat descriptorLEye, descriptorREye;
+					descriptorLEye = leyeFeatures.row(eye_counter).clone() ;
+					descriptorREye = reyeFeatures.row(eye_counter).clone() ;
+					Mat leye_samples = leye_pca.project(selectCols(goodCols[0],descriptorLEye));
+					Mat reye_samples = reye_pca.project(selectCols(goodCols[1],descriptorREye));
+					for (int i=0;i< nb_coponents;i++){
+						full_descriptor.at<float>(0,i) = leye_samples.at<float>(0,i) ;
+						full_descriptor.at<float>(0,i+nb_coponents) = reye_samples.at<float>(0,i) ;
+					}
+ 				}
+				eye_counter ++ ;
+			}
+			if(featureDetails.at<uchar>(pic_counter,2) == 1){
+				if(mouth_counter >= mouthFeatures.rows)
+					cout << "Attention mouth_counter trop grand" << endl ;
+				else{
+					Mat descriptorMouth = mouthFeatures.row(mouth_counter).clone() ;
+					Mat mouth_sample = mouth_pca.project(selectCols(goodCols[2],descriptorMouth)) ;
+					for (int i=0;i< nb_coponents;i++){
+						full_descriptor.at<float>(0,i+2*nb_coponents) = mouth_sample.at<float>(0,i) ;
+					}
+ 				}
+				mouth_counter ++ ;
+
+			}
+			if(featureDetails.at<uchar>(pic_counter,3) == 1){
+				if(nose_counter >= noseFeatures.rows)
+					cout << "Attention nose_counter trop grand" << endl ;
+				else{
+					Mat descriptorNose = noseFeatures.row(nose_counter).clone() ;
+					Mat nose_sample = mouth_pca.project(selectCols(goodCols[2],descriptorNose)) ;
+					for (int i=0;i< nb_coponents;i++){
+						full_descriptor.at<float>(0,i+2*nb_coponents) = nose_sample.at<float>(0,i) ;
+					}
+ 				}
+				nose_counter ++ ;
+			}
+
+			for(int x=0;x<nb_celebrities;x++){
+				prediction[x] = classifiers[x].predict(full_descriptor,true);
+			}
+			nb_images[classe] ++ ;
+			float min = 100  ;
+			int pred =0 ;
+			for(int x=0;x<nb_celebrities;x++){
+				if (prediction[x] < min){
+					pred = x ;
+					min = prediction[x] ;
+				}
+				cout << prediction[x] << " " ;
+			}
+			cout << endl ;
+			cout << pic_counter << " " << eye_counter << " " << mouth_counter << " " << nose_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
+			if(celebrityName.compare(names[pred])){
+				cout << "Erreur de classification" << endl ;
+				nb_error[classe] ++ ;
+			}
+		}
+		for(int x = 0 ; x < nb_celebrities ; x ++){
+			results[k].insert(pair<string,pair<int,int> >(names[x],pair<int,int>(nb_error[x],nb_images[x])));
+		}
+	}
+	cout << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
 		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;

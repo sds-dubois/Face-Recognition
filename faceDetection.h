@@ -27,3 +27,7 @@ bool showEyes(string filename,bool verbose);
 void showAllEyes(bool verbose) ;
 void showLeftRightEyes(string filename) ;
 void showEyes(string filename);
+
+void extractCroppedDescriptor(int n, int m , bool verbose) ;
+void showSelectedFacesFeatures(int n, int m, int nb_feats,  string nb,int rankedFeatures[]) ;
+void showPCAfaces(int n, int m,int nb_components,int rankedFeatures[]);

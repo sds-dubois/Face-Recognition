@@ -24,14 +24,15 @@ void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodC
 void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose,bool completeDetection) ;
 
 void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
-void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
-pair<Mat,Mat> computePCA(Mat features,int nb_coponents) ;
 
 // use PCA reduction & full descriptors completed with zeros when a zone is not detected
 void predictPCA(String database,vector<vector<int> > goodCols) ;
 
 // use PCA reduction & a classifier by zone
 void predictPCA2(String database,vector<vector<int> > goodCols,bool completeDetection) ;
+
+// use only one descriptor for all zones, and fill with zeros when a zone is not detected
+void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
 
 // the best to use
 void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
