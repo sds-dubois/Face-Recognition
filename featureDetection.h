@@ -35,4 +35,4 @@ void predictPCA2(String database,vector<vector<int> > goodCols,bool completeDete
 void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
 
 // the best to use
-void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
+void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;

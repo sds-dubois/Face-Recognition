@@ -1194,7 +1194,7 @@ void predictPCA2(String db,vector<vector<int> > goodCols,bool completeDetection)
 }
 
 
-void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid){
+void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid){
 
 	String dir_allFeatures_training = "../allFeatures/" + db + "/training";
 	String dir_allFeatures_test = "../allFeatures/" + db + "/test" ;
@@ -1220,7 +1220,10 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 	if(completeDetection)
 		fn = "/all_completed.yml" ;
 	else
-		fn = "/all.yml" ;
+		fn = "/all_simple.yml" ;
+
+	int nb_people ;
+
 	FileStorage f((dir_allFeatures_training+fn), FileStorage::READ);
 	f["classes_eye"] >> classesUnclustered_eye;
 	f["leye"] >> leyeFeaturesUnclustered;
@@ -1230,6 +1233,15 @@ void classifyAndPredict(map<int,string> names ,int nb_coponents,String db , vect
 	f["classes_nose"] >> classesUnclustered_nose;
 	f["nose"] >> noseFeaturesUnclustered;
 	f["featureDetails"] >> featureDetailsTraining ;
+	f["nb_people"] >> nb_people ;
+
+	if( nb_people != nb_celebrities)
+		cout << "Error, il n'y a pas le bon nombre de personnes" << endl ;
+	map<int,string> names ;
+	for (int i=0; i < nb_people ; i++){
+		f[("name"+to_string(i))] >> names[i] ;
+	}
+
 	f.release();
 
 	Mat leyeFeaturesTest,reyeFeaturesTest,mouthFeaturesTest,noseFeaturesTest,featureDetailsTest;

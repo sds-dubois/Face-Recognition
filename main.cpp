@@ -95,6 +95,6 @@ int main(int argc, char ** argv){
 	* chosir completeDetection == true pour tester le modele lorsque l'on a intuite un deuxieme oeil lorsque cela est possible
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
-	//clusteringClassifyAndPredict(60,names,database,true,false) ;
+	classifyAndPredict(128, database , goodCols, false, false) ;
 	return 0 ;
 }
