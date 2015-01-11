@@ -629,7 +629,6 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 
 	cout << "Resultats : " << endl ;
 
-
 	for (int k=0;k<nb_celebrities;k++){
 		cout << "- " << names[k]  << " " << names[k] << " : " << endl ;
 		cout << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
@@ -657,7 +656,6 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vect
     CascadeClassifier mouth_classifier = getMouthCascadeClassifier();
     CascadeClassifier nose_classifier = getNoseCascadeClassifier();
 	CvSVM classifiers[nb_celebrities] ;
-	String celebrities[nb_celebrities] ;
 
 	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered,featureDetailsTraining;
 	vector<int> classesUnclustered_eye,classesUnclustered_nose,classesUnclustered_mouth ;
@@ -802,19 +800,18 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vect
 
 	cout << "Classifieurs crees" << endl ;
 
-	int index = 0 ;
 	for (directory_iterator it(dir_single_classifier); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					classifiers[j].load(p.string().c_str()) ;
+
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
-
-	if(index != nb_celebrities)
-		cout << "Erreur : il y a un nombre différent de classifieurs et de celebrites" << endl ;
 
 	cout << "Classifieurs charges" << endl ;
 
@@ -921,15 +918,15 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vect
 	cout << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cout << "- " << names[k]  << " " << names[k] << " : " << endl ;
+		cout << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cout << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
 	for (int k=0;k<nb_celebrities;k++){
-		fout << celebrities[k] << "_unlabeled" << " : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl ;
+		fout << names[k] << "_unlabeled" << " : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		fout << names[k] << "_labeled" << " : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl ;
 	}
 	fout.close();
 
@@ -1038,7 +1035,6 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 	CvSVM reye_classifiers[nb_celebrities] ;
 	CvSVM nose_classifiers[nb_celebrities] ;
 	CvSVM mouth_classifiers[nb_celebrities] ;
-	String celebrities[nb_celebrities] ;
 
 	map<int,Mat> leye_training_set,reye_training_set,mouth_training_set,nose_training_set ;
 	
@@ -1167,65 +1163,60 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 
 	cout << "Classifieurs crees" << endl ;
 
-	int index = 0 ;
 	for (directory_iterator it(dir_leye_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			leye_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					leye_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_reye_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			reye_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					reye_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_nose_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			nose_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					nose_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_mouth_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			mouth_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << " " << names[index] << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					mouth_classifiers[j].load(p.string().c_str()) ;
+
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
-
-	if(index != nb_celebrities)
-		cout << "Erreur : il y a un nombre différent de classifieurs et de celebrites" << endl ;
 
 	cout << "Classifieurs charges" << endl ;
 
 	string celebrityName ;
 	map<string,pair<int,int> > results[2] ;
-	/*
-	int i = 0 ;
-	for(int pic_counter =0 ; pic_counter < featureDetailsTraining.rows ; pic_counter++){
-			if(featureDetailsTraining.at<uchar>(pic_counter,1) == 1)
-				i++;
-	}
-	cout << "nbr oeils " << i << endl ;
-	*/
+
 	for(int k =0; k<2;k++){ 
 		int eye_counter =0 ; int mouth_counter = 0 ; int nose_counter = 0;
 		int nb_images[nb_celebrities] ;
@@ -1333,15 +1324,15 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cout << "- " << names[k]  << " : " << endl ;
+		cout << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cout << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
 	for (int k=0;k<nb_celebrities;k++){
-		fout << celebrities[k] << "_unlabeled" << " : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl ;
+		fout << names[k] << "_unlabeled" << " : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		fout << names[k] << "_labeled" << " : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl ;
 	}
 	fout.close();
 }
