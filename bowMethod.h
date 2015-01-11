@@ -17,14 +17,15 @@
 using namespace std;
 using namespace cv ;
 
-// classify and predict using zone's SIFT descriptors and clustering
-void clusteringClassifyAndPredict(int i,map<int,string> names ,String db,bool completeDetection, bool cross_valid) ;
 
 //compute dictionaries from sift extracted on training data
 void buildBowDictionary(int i,bool verbose,string db) ;
+
 //compute SVM classifiers from BOW histograms, from sift extracted on training data, & store BOW descriptors of training data
 int createBowClassifier(string db) ;
+
 //compute & store BOW descriptors of test data
 void computeBowTestDesciptors(string db) ;
+
 //predict using training's & test's stored BOW descriptors, and SVM classifiers
 void bowPredict(string db) ;
