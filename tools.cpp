@@ -1,3 +1,4 @@
+#include "constants.h"
 #include "featureDetection.h"
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
@@ -13,10 +14,6 @@
 
 using namespace std;
 using namespace cv ;
-
-#define selectFeatures  false 
-#define pca false
-#define nb_celebrities 3
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 

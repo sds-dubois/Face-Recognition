@@ -1,3 +1,4 @@
+#include "constants.h"
 #include "featureDetection.h"
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
@@ -21,11 +22,6 @@
 using namespace std;
 using namespace cv;
 using namespace boost::filesystem ;
-
-#define selectFeatures  false
-#define pca false
-#define nb_celebrities 3
-
 
 void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose, int detectionType){
 

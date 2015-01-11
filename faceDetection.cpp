@@ -65,38 +65,6 @@ Rect selectBestFace(Mat frame, vector<Rect> faces){
 }
 
 /**
- * This function returns the most probable face among the given faces
- * The rule is the following : we return the face with the highest
- * number of zone (eyes, nose, mouth) inside
- */
-Rect selectBestFace2(Mat frame, vector<Rect> faces){
-    CascadeClassifier eyes_class = getEyesCascadeClassifier();
-    CascadeClassifier nose_class = getNoseCascadeClassifier();
-    CascadeClassifier mouth_class = getMouthCascadeClassifier();
-
-    vector<int> nb_features(faces.size());
-
-    for(int i=0;i<faces.size();i++){
-        Mat reframedImg = frame(faces[i]);
-        vector<Rect> features = detectEye(eyes_class, reframedImg);
-        nb_features[i] = min<int>(1,features.size());
-        features = detectMouth(mouth_class, reframedImg);
-        nb_features[i] += min<int>(1,features.size());
-        features = detectNose(nose_class, reframedImg);
-        nb_features[i] += min<int>(1,features.size());
-    }
-    int i_max=0;
-    int val_max = 0;
-    for(int i=0;i<faces.size();i++){
-        if(nb_features[i] > val_max){
-            val_max = nb_features[i];
-            i_max = i;
-        }
-    }
-    return faces[i_max];
-}
-
-/**
  * Show all features in an image : faces, eyes, mouthes, noses
  */
 void showAllFeatures(Mat frame, vector<Rect> faces){
