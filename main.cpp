@@ -49,7 +49,7 @@ int main(int argc, char ** argv){
 	//buildBowDictionary(50,false, database) ;
 	//createBowClassifier(database) ;
 	//computeBowTestDesciptors(database) ;
-	bowPredict(database) ;
+	//bowPredict(database) ;
 
 
 	/*
@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	*/
-	//featureExtraction(database,goodCols,false,1) ;
+	//featureExtraction(database,goodCols,false,2) ;
 
 
 	//classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
@@ -68,6 +68,6 @@ int main(int argc, char ** argv){
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
-	//classifyAndPredict(128, database, goodCols, 0,false) ;
+	classifyAndPredict(128, database, goodCols, 2,false) ;
 	return 0 ;
 }

@@ -90,7 +90,7 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 					// Loading file
 					Mat input = imread(p2.string(), CV_LOAD_IMAGE_GRAYSCALE);
 					vector<Rect> faces = detectFaces(face_classifier, input);
-					Mat zonesFound(1,4,CV_8U) ;
+					Mat zonesFound= Mat::zeros(1,4,CV_8U) ;
 					zonesFound.at<uchar>(0,0) = index ; //classe de l'image traitee
 					Rect searchZone ;
 					vector<KeyPoint> keypoints_mouth ;
@@ -285,7 +285,6 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 	CvSVM reye_classifiers[nb_celebrities] ;
 	CvSVM nose_classifiers[nb_celebrities] ;
 	CvSVM mouth_classifiers[nb_celebrities] ;
-	String celebrities[nb_celebrities] ;
 
 	Mat leyeFeaturesUnclustered,reyeFeaturesUnclustered,mouthFeaturesUnclustered,noseFeaturesUnclustered,featureDetailsTraining;
 	vector<int> classesUnclustered_eye,classesUnclustered_nose,classesUnclustered_mouth ;
@@ -471,52 +470,54 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 
 	cout << "Classifieurs crees" << endl ;
 
-	int index = 0 ;
 	for (directory_iterator it(dir_leye_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			leye_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					leye_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_reye_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			reye_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					reye_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_nose_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			nose_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					nose_classifiers[j].load(p.string().c_str()) ;
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
 
-	index = 0 ;
 	for (directory_iterator it(dir_mouth_classifiers); it != directory_iterator() ; it++) {
 		path p = it->path() ;
 		if(is_regular_file(it->status())){
-			mouth_classifiers[index].load(p.string().c_str()) ;
-			celebrities[index] = p.stem().string() ;
-			cout << "Added " << p.string() << " = " << p.stem().string() << " " << names[index] << endl ;
-			index ++ ;
+			string name = p.stem().string() ;
+			for(int j=0; j< names.size(); j++){
+				if(name.compare(names[j]) == 0)
+					mouth_classifiers[j].load(p.string().c_str()) ;
+
+			}
+			cout << "Added " << p.stem().string() << endl ;
 		}
 	}
-
-	if(index != nb_celebrities)
-		cout << "Erreur : il y a un nombre différent de classifieurs et de celebrites" << endl ;
 
 	cout << "Classifieurs charges" << endl ;
 
@@ -630,15 +631,15 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cout << "- " << names[k]  << " " << names[k] << " : " << endl ;
+		cout << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cout << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
 	for (int k=0;k<nb_celebrities;k++){
-		fout << celebrities[k] << "_unlabeled" << " : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		fout << celebrities[k] << "_labeled" << " : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl ;
+		fout << names[k] << "_unlabeled" << " : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		fout << names[k] << "_labeled" << " : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl ;
 	}
 	fout.close();
 
