@@ -47,9 +47,9 @@ int main(int argc, char ** argv){
 	* BOW method
 	*/
 	//buildBowDictionary(50,false, database) ;
-	createBowClassifier(database) ;
+	//createBowClassifier(database) ;
 	//computeBowTestDesciptors(database) ;
-	//bowPredict(database) ;
+	bowPredict(database) ;
 
 
 	/*
