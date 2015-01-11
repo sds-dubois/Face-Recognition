@@ -623,13 +623,13 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 	}
 
 
-	cout << "Resultats : " << endl ;
+	cerr << "Resultats : " << endl ;
 
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << names[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
+		cerr << "- " << names[k]  << " " << names[k] << " : " << endl ;
+		cerr << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cerr << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
@@ -914,12 +914,12 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vect
 			results[k].insert(pair<string,pair<int,int> >(names[x],pair<int,int>(nb_error[x],nb_images[x])));
 		}
 	}
-	cout << "Resultats : " << endl ;
+	cerr << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cerr << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
+		cerr << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		cerr << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
@@ -1325,13 +1325,13 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 	}
 
 
-	cout << "Resultats : " << endl ;
+	cerr << "Resultats : " << endl ;
 
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cerr << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
+		cerr << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		cerr << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");

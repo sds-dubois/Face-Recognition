@@ -60,7 +60,6 @@ int main(int argc, char ** argv){
 	//featureExtraction(database,goodCols,false,2) ;
 
 
-	//classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
 	/*
     * void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid) ;
 	* nb_components = dimension de la PCA
@@ -68,6 +67,11 @@ int main(int argc, char ** argv){
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
+    cerr << "Single descriptor" << endl;
+    classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
+    cerr << "Descriptor by zone" << endl;
 	classifyAndPredict(128, database, goodCols, 2,false) ;
+    cerr << "Clustering" << endl;
+    clusteringClassifyAndPredict(128, database, 2, false);
 	return 0 ;
 }

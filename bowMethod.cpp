@@ -412,12 +412,12 @@ void bowPredict(string db){
 		}
 	}
 
-	cout << "Resultats : " << endl ;
+	cerr << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
-		cout << "- " << celebrities[k]  <<  " : " << endl ;
-		cout << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cout << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cerr << "- " << celebrities[k]  <<  " : " << endl ;
+		cerr << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
+		cerr << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
