@@ -59,8 +59,7 @@ int main(int argc, char ** argv){
 	*/
 	featureExtraction(database,goodCols,false,0) ;
 	featureExtraction(database,goodCols,false,1) ;
-	featureExtraction("yale_face_db2",goodCols,false,0) ;
-	featureExtraction("yale_face_db2",goodCols,false,1) ;
+	featureExtraction(database,goodCols,false,2) ;
 
 
 	//classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
