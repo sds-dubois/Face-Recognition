@@ -39,7 +39,7 @@ int main(int argc, char ** argv){
 	showSelectedFacesFeatures(168,192,25000,"25000",rankedFeats2) ;
 	showSelectedFacesFeatures(168,192,30000,"30000",rankedFeats2) ;
 	*/
-	
+
 	String database = "yale_face_db" ;
 	vector<vector<int> > goodCols = getGoodCols(60) ;
 
@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	*/
-	//featureExtraction(database,goodCols,false,2) ;
+	featureExtraction(database,goodCols,false,0) ;
 
 
 	/*
