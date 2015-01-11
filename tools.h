@@ -15,6 +15,9 @@ void addNumberToFile(const char * filename, float n) ;
 void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename) ;
 Mat selectCols(vector<int> goodCols,Mat m) ;
 
+// selected features for each zone (return the nb best)
+vector<vector<int> > getGoodCols(int nb) ;
+
 CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 
