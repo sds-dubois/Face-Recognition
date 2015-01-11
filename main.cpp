@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	*/
-	featureExtraction(database,goodCols,false,0) ;
+	//featureExtraction(database,goodCols,false,0) ;
 
 
 	//classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
@@ -68,7 +68,7 @@ int main(int argc, char ** argv){
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
-	//classifyAndPredict(60, database, goodCols, 0,true) ;
+	classifyAndPredict(128, database, goodCols, 0,false) ;
 	//clusteringClassifyAndPredict(50,database,0,false);
 	return 0 ;
 }
