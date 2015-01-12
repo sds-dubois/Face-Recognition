@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
 	* choisir verbose == true pour voir les images et les zones detectees
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	*/
-	featureExtraction(database,goodCols,false,0) ;
+	//featureExtraction(database,goodCols,false,0) ;
 
 
 	/*
