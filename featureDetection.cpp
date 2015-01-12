@@ -23,7 +23,7 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem ;
 
-void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose, int detectionType){
+void featureExtraction(String db , bool verbose, int detectionType){
 
 	String dir_labeled_data = "../data/" + db + "/labeled" ;
 	String dir_unlabeled_data = "../data/" + db + "/unlabeled" ;
@@ -202,9 +202,9 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 				if(featureDetails.at<uchar>(pic_counter,1) == 1)
 					i++;
 		}
-		cout << "NBR oeils : " << nb_eye << " " << i << " " << leyeFeaturesUnclustered.rows << " " << reyeFeaturesUnclustered.rows << endl ;
-		cout << "NBR bouches : " << nb_mouth << " " << mouthFeaturesUnclustered.rows << endl ;
-		cout << "NBR nez : " << nb_nose << " " << noseFeaturesUnclustered.rows << endl ;
+		cout << "NBR oeils : " << nb_eye << endl ;
+		cout << "NBR bouches : " << nb_mouth << endl ;
+		cout << "NBR nez : " << nb_nose << endl ;
 		cout << "features extracted" << endl ;
 
 		//Store features matrices
@@ -218,8 +218,10 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 			fn = "/all_completed.yml" ;
 		else if(detectionType == 1)
 			fn = "/all_bestFace.yml" ;
-		else
+		else if(detectionType == 0)
 			fn = "/all_simple.yml" ;
+		else
+			fn = "/all_temp.yml" ;
 		FileStorage f((dir_allFeatures[k]+fn), FileStorage::WRITE);
 		f << "classes_eye" << classesUnclustered_eye;
 		f << "leye" << leyeFeaturesUnclustered;
@@ -263,7 +265,9 @@ void featureExtraction(String db , vector<vector<int> > goodCols , bool verbose,
 }
 
 
-void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid){
+void classifyAndPredict(int nb_coponents, String db, int nb_features, int detectionType, bool cross_valid){
+
+	vector<vector<int> > goodCols = getGoodCols(nb_features) ;
 
 	String dir_allFeatures_training = "../allFeatures/" + db + "/training";
 	String dir_allFeatures_test = "../allFeatures/" + db + "/test" ;
@@ -581,7 +585,6 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 					descriptorMouth = mouthFeatures.row(mouth_counter).clone() ;
 					for(int x=0;x<nb_celebrities;x++){
 						prediction[x] += mouth_classifiers[x].predict(mouth_pca.project(selectCols(goodCols[2],descriptorMouth)),true) ;
-						//cout << prediction[x] << " " ;
 					}
  				}
 				mouth_counter ++ ;
@@ -640,7 +643,9 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 
 }
 
-void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vector<int> > goodCols,int detectionType, bool cross_valid){
+void classifyAndPredictSingleDescriptor(int nb_coponents,String db , int nb_features,int detectionType, bool cross_valid){
+
+	vector<vector<int> > goodCols = getGoodCols(nb_features) ;
 
 	String dir_allFeatures_training = "../allFeatures/" + db + "/training";
 	String dir_allFeatures_test = "../allFeatures/" + db + "/test" ;
@@ -1274,7 +1279,6 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 					descriptorMouth = mouthFeatures.row(mouth_counter).clone() ;
 					for(int x=0;x<nb_celebrities;x++){
 						prediction[x] += mouth_classifiers[x].predict(mouth_dic.row(mouth[mouth_counter].trainIdx),true) ;
-						//cout << prediction[x] << " " ;
 					}
  				}
 				mouth_counter ++ ;

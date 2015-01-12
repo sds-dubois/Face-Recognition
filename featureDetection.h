@@ -17,15 +17,15 @@ using namespace cv ;
 
 // extracts SIFT descriptors for each zone and store them
 // method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
-void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose, int detectionType) ;
+void featureExtraction(String database,bool verbose, int detectionType) ;
 
 // use only one descriptor for all zones, and fill with zeros when a zone is not detected
 // method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
-void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vector<int> > goodCols, int detectionType, bool cross_valid) ;
+void classifyAndPredictSingleDescriptor(int nb_coponents,String db , int nb_features, int detectionType, bool cross_valid) ;
 
 // the best to use
 // method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
-void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid) ;
+void classifyAndPredict(int nb_coponents, String db, int nb_features, int detectionType, bool cross_valid) ;
 
 // classify and predict using zone's SIFT descriptors and clustering
 // method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones

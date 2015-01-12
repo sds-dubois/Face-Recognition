@@ -27,10 +27,10 @@ void showAllEyes(bool verbose) ;
 void showLeftRightEyes(string filename) ;
 void showEyes(string filename);
 
+// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
+bool enhanceDetection(Rect face, vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose, int detectionType);
+
 void extractCroppedDescriptor(int n, int m , bool verbose) ;
 // selectionMethod 1 : information gain / 2 : chi²
 void showSelectedFacesFeatures(int n, int m, int nb_feats,  string nb,int selectionMethod) ;
 void showPCAfaces(int n, int m,int nb_components,int selectionMethod);
-
-// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
-bool enhanceDetection(Rect face, vector<KeyPoint> &keypoints_eyes, vector<KeyPoint> &keypoints_mouth, vector<KeyPoint> &keypoints_nose, int detectionType);

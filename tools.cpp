@@ -50,7 +50,7 @@ void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename){
 
 
 Mat selectCols(vector<int> goodCols,Mat m){
-	if(!selectFeatures)
+	if(goodCols.size() == 128)
 		return m ;
 	else{
 		int n = goodCols.size() ;
@@ -176,18 +176,6 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
 	}
 }
 
-pair<Mat,Mat> computePCA(Mat featuresUnclustered,int nb_coponents){
-    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
-    Mat eigenvectors = principalCA.eigenvectors.clone();
-	Mat principalVectors = Mat(nb_coponents , eigenvectors.cols,CV_32FC1);
-	Mat mean = principalCA.mean.clone() ;
-
-	cout << "Mean size : " << mean.size() << endl ;
-    for(int j=0;j<nb_coponents;j++){
-		principalVectors.row(j) = eigenvectors.row(j) ;
-	}
-	return pair<Mat,Mat>(principalVectors.t(),mean) ;
-}
 
 vector<vector<int> > getGoodCols(int nb){
 	vector<vector<int> > goodCols ;

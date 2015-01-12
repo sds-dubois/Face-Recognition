@@ -22,4 +22,3 @@ CvSVMParams chooseSVMParams(void) ;
 vector<CvParamGrid> chooseSVMGrids(void) ;
 
 void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String title);
-pair<Mat,Mat> computePCA(Mat featuresUnclustered,int nb_coponents) ;
