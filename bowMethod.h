@@ -19,7 +19,7 @@ using namespace cv ;
 
 
 //compute dictionaries from sift extracted on training data
-void buildBowDictionary(int i,bool verbose,string db) ;
+void buildBowDictionary(int dictionarySize,bool verbose,string db) ;
 
 //compute SVM classifiers from BOW histograms, from sift extracted on training data, & store BOW descriptors of training data
 int createBowClassifier(string db) ;

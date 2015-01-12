@@ -22,12 +22,11 @@ using namespace cv;
 using namespace boost::filesystem;
 
 
-void buildBowDictionary(int i,bool verbose,string db){
+void buildBowDictionary(int dictionarySize,bool verbose,string db){
      CascadeClassifier face_classifier = getFaceCascadeClassifier();
  	initModule_nonfree() ;
- 	//to store the input file names
+
  	string filename ;
- 	//to store the current input image
  	Mat input;
  
  	//To store the keypoints that will be extracted by SIFT
@@ -85,8 +84,6 @@ void buildBowDictionary(int i,bool verbose,string db){
  	cout << "features Unclustered " << featuresUnclustered.size() << endl ;
  
  	//Construct BOWKMeansTrainer
- 	//the number of bags
- 	int dictionarySize=i;
  	//define Term Criteria
  	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
  	//retries number

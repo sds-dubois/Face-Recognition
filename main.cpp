@@ -18,27 +18,14 @@ using namespace cv;
 
 
 int main(int argc, char ** argv){
-    int j ;
-	bool b ; //True if you want to see images and Sift detection while building the dictionary
-    if(argc > 1){
-        stringstream ss(argv[1]);
-        ss >> j;
-		stringstream ss2(argv[1]);
-		ss2 >> b;
-    }else{
-/*
-		cin >> j;
-		cin >> b;
-*/    }
+
 
 	/*
-	showSelectedFacesFeatures(168,192,1000,"1000",rankedFeats2) ;
-	showSelectedFacesFeatures(168,192,5000,"5000",rankedFeats2) ;
-	showSelectedFacesFeatures(168,192,10000,"10000",rankedFeats2) ;
-	showSelectedFacesFeatures(168,192,15000,"15000",rankedFeats2) ;
-	showSelectedFacesFeatures(168,192,25000,"25000",rankedFeats2) ;
-	showSelectedFacesFeatures(168,192,30000,"30000",rankedFeats2) ;
+	* Pour visualiser la 'feature selection' sur les pixels du visage
+	* Method 1 : information gain - method 2 : chi square
+	* Par ordre d'importance : du plus blanc au plus foncé
 	*/
+	//displaySelectedFeaturesOnFaces(2) ;
 
 	String database = "yale_face_db" ;
 
@@ -52,24 +39,25 @@ int main(int argc, char ** argv){
 
 
 	/*
-	* void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose, int detectionType)
+	* void featureExtraction(String database,bool verbose, int detectionType)
 	* choisir verbose == true pour voir les images et les zones detectees
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
+	* use another integer as detectionType to save the features in a temporary file (and not erase previous files) 
 	*/
-	//featureExtraction(database,goodCols,false,0) ;
+	//featureExtraction(database,false,0) ;
 
 
 	/*
-    * void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCols, int detectionType, bool cross_valid) ;
+    * void classifyAndPredict(int nb_coponents, String db,int nb_features, int detectionType, bool cross_valid) ;
 	* nb_components = dimension de la PCA
-	* goodCols = colonnes selectionnees parmi les 128 entiers decrivant un SIFT
+	* nb_features = nombre de coordonéées selectionnees parmi les 128 entiers decrivant un SIFT
 	* detectionType:  methode 0 : simple - 1 : select best face - 2 : best face & intuite zones
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
     cerr << "Single descriptor" << endl;
     //classifyAndPredictSingleDescriptor(64, database , 128, false, false) ;
     cerr << "Descriptor by zone" << endl;
-	classifyAndPredict(10, database, 128, 1,false) ;
+	classifyAndPredict(60, database, 60, 2,false) ;
     cerr << "Clustering" << endl;
     //clusteringClassifyAndPredict(90, database, 1, false);
 	return 0 ;
