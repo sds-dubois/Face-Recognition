@@ -626,9 +626,9 @@ void classifyAndPredict(int nb_coponents, String db, vector<vector<int> > goodCo
 	cerr << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
-		cerr << "- " << names[k]  << " " << names[k] << " : " << endl ;
-		cerr << "    unlabeled : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
-		cerr << "    labeled : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
+		cerr << "- " << names[k]  << " : " << endl ;
+		cerr << "    test : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cerr << "    training : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
@@ -914,9 +914,9 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , vector<vect
 	cerr << "Resultats : " << endl ;
 
 	for (int k=0;k<nb_celebrities;k++){
-		cerr << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cerr << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cerr << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cerr << "- " << names[k] << " : " << endl ;
+		cerr << "    training : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cerr << "    test : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");
@@ -1320,9 +1320,9 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 
 
 	for (int k=0;k<nb_celebrities;k++){
-		cerr << "- " << celebrities[k]  << " " << names[k] << " : " << endl ;
-		cerr << "    unlabeled : " << results[0].at(celebrities[k]).first << " / " << results[0].at(celebrities[k]).second << endl ;
-		cerr << "    labeled : " << results[1].at(celebrities[k]).first << " / " << results[1].at(celebrities[k]).second << endl << endl ;
+		cerr << "- " << names[k]  << " : " << endl ;
+		cerr << "    test : " << results[0].at(names[k]).first << " / " << results[0].at(names[k]).second << endl ;
+		cerr << "    training : " << results[1].at(names[k]).first << " / " << results[1].at(names[k]).second << endl << endl ;
 	}
 
 	ofstream fout("../results.yml");

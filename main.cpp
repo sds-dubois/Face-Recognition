@@ -68,10 +68,10 @@ int main(int argc, char ** argv){
 	* choisir cross_valid == true pour entrainer les cassifieurs avec cross-validation
 	*/
     cerr << "Single descriptor" << endl;
-    classifyAndPredictSingleDescriptor(128, database , goodCols, false, false) ;
+    //classifyAndPredictSingleDescriptor(64, database , goodCols, false, false) ;
     cerr << "Descriptor by zone" << endl;
-	classifyAndPredict(128, database, goodCols, 2,false) ;
+	classifyAndPredict(10, database, goodCols, 1,false) ;
     cerr << "Clustering" << endl;
-    clusteringClassifyAndPredict(128, database, 2, false);
+    //clusteringClassifyAndPredict(90, database, 1, false);
 	return 0 ;
 }
