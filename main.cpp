@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
     cerr << "Single descriptor" << endl;
     //classifyAndPredictSingleDescriptor(64, database , 128, false, false) ;
     cerr << "Descriptor by zone" << endl;
-	classifyAndPredict(60, database, 60, 2,false) ;
+	classifyAndPredict(128, database, 128, 0,false) ;
     cerr << "Clustering" << endl;
     //clusteringClassifyAndPredict(90, database, 1, false);
 	return 0 ;

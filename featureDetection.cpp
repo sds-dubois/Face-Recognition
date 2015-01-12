@@ -523,14 +523,7 @@ void classifyAndPredict(int nb_coponents, String db, int nb_features, int detect
 
 	string celebrityName ;
 	map<string,pair<int,int> > results[2] ;
-	/*
-	int i = 0 ;
-	for(int pic_counter =0 ; pic_counter < featureDetailsTraining.rows ; pic_counter++){
-			if(featureDetailsTraining.at<uchar>(pic_counter,1) == 1)
-				i++;
-	}
-	cout << "nbr oeils " << i << endl ;
-	*/
+
 	for(int k =0; k<2;k++){
 		int eye_counter =0 ; int mouth_counter = 0 ; int nose_counter = 0;
 		int nb_images[nb_celebrities] ;
@@ -614,7 +607,7 @@ void classifyAndPredict(int nb_coponents, String db, int nb_features, int detect
 				cout << prediction[x] << " " ;
 			}
 			cout << endl ;
-			cout << pic_counter << " " << eye_counter << " " << mouth_counter << " " << nose_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
+			cout << pic_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
 			if(celebrityName.compare(names[pred])){
 				cout << "Erreur de classification" << endl ;
 				nb_error[classe] ++ ;
@@ -906,7 +899,7 @@ void classifyAndPredictSingleDescriptor(int nb_coponents,String db , int nb_feat
 				cout << prediction[x] << " " ;
 			}
 			cout << endl ;
-			cout << pic_counter << " " << eye_counter << " " << mouth_counter << " " << nose_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
+			cout << pic_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
 			if(celebrityName.compare(names[pred])){
 				cout << "Erreur de classification" << endl ;
 				nb_error[classe] ++ ;
@@ -1308,7 +1301,7 @@ void clusteringClassifyAndPredict(int dictionarySize,String db ,int detectionTyp
 				cout << prediction[x] << " " ;
 			}
 			cout << endl ;
-			cout << pic_counter << " " << eye_counter << " " << mouth_counter << " " << nose_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
+			cout << pic_counter << " Classe retenue : " << pred << " = " << names[pred] << endl ;
 			if(celebrityName.compare(names[pred])){
 				cout << "Erreur de classification" << endl ;
 				nb_error[classe] ++ ;
