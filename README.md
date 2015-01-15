@@ -22,17 +22,10 @@ Functions to run only in debug mode :
 
 Directory Structure
 
-- allFeatures
-The features extracted on images are stored here
-- classifiers
-The classifiers are stored here
-- data/*database*
-The images on which to train and test the program
-- dictionnary
-The dictionnaries for Bag-of-Words methods are stored here
-- lib
-Some libraries for OpenCv (HaarCascade classifiers)
-- stats
-  Some statistics on the position and size of eyes, nose, and mouth in a face
-- viz
-  Some Python script to display the features extracted on images
+- allFeatures ..............................The features extracted on images are stored here
+- classifiers................................................................The classifiers are stored here
+- data/*database*.........................The images on which to train and test the program
+- dictionnary...............The dictionnaries for Bag-of-Words methods are stored here
+- lib.........................................Some libraries for OpenCv (HaarCascade classifiers)
+- stats...Some statistics on the position and size of eyes, nose, and mouth in a face
+- viz........................Some Python script to display the features extracted on images
