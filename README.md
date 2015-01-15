@@ -14,7 +14,7 @@ In this project, there are multiple challenges :
 
 
 C++ code using OpenCv & Boost.
-Please read the report to understand how to use the code.
+Please read the report for more details.
 
 Best methods are implemented in the file *featureDetection.cpp*. One should first run *featureExtraction* to extract features on training and test images (this has already been done for 3 people of the Yale Face DB, see in data/yale_face_db). Then one can build classifiers and see prediction results using different methods (*classifyAndPredict*, *classifyAndPredictSingleDescriptor* or *clusteringClassifyAndPredict*). Many comments are written in header files to explain how to use these functions and what are their differences.
 
