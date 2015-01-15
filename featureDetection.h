@@ -15,24 +15,21 @@
 using namespace std;
 using namespace cv ;
 
-
-// use full descriptors completed with zeros when a zone is not detected
-// extracts features from images and compute classifiers & reducers
-void buildPCAreducer(int nb_coponents,String database,vector<vector<int> > goodCols,bool verbose) ;
-
 // extracts SIFT descriptors for each zone and store them
-void featureExtraction(String database,vector<vector<int> > goodCols,bool verbose,bool completeDetection) ;
-
-void initClassification(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols) ;
-
-// use PCA reduction & full descriptors completed with zeros when a zone is not detected
-void predictPCA(String database,vector<vector<int> > goodCols) ;
-
-// use PCA reduction & a classifier by zone
-void predictPCA2(String database,vector<vector<int> > goodCols,bool completeDetection) ;
+// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
+// use another integer as detectionType to save the features in a temporary file (and not erase previous files) 
+void featureExtraction(String database,bool verbose, int detectionType) ;
 
 // use only one descriptor for all zones, and fill with zeros when a zone is not detected
-void classifyAndPredictSingleDescriptor(map<int,string> names ,int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
+// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
+// nb_components : dimension for PCA - nb_features : number of features selected
+void classifyAndPredictSingleDescriptor(int nb_components,String db , int nb_features, int detectionType, bool cross_valid) ;
 
 // the best to use
-void classifyAndPredict(int nb_coponents,String db , vector<vector<int> > goodCols,bool completeDetection, bool cross_valid) ;
+// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
+// nb_components : dimension for PCA - nb_features : number of features selected
+void classifyAndPredict(int nb_coponents, String db, int nb_features, int detectionType, bool cross_valid) ;
+
+// classify and predict using zone's SIFT descriptors and clustering
+// method 0 : simple - method 1 : select best face - method 2 : best face & intuite zones
+void clusteringClassifyAndPredict(int dictionarySize ,String db,int detectionType, bool cross_valid) ;

@@ -12,7 +12,6 @@ def show(k,path,name):
 	target= my_data[:,0] # Class of each instance (1, 2 or 3)
 	print "Size of the data (rows, #attributes) ", data.shape
 
-
 	# Performs principal components analysis (PCA) on the n-by-p data matrix A (data)
 	# Rows of A correspond to observations, columns to variables.
 	M = mean(data,0) # compute the mean
@@ -22,17 +21,7 @@ def show(k,path,name):
 	idx = eigval.argsort()[::-1] # Sort eigenvalues
 	eigvec = eigvec[:,idx] # Sort eigenvectors according to eigenvalues
 
-	#newData2 = dot(C,real(eigvec[:,:2])) # Project the data to the new space (2-D)
 	newData3 = dot(C,real(eigvec[:,:3])) # Project the data to the new space (3-D)
-
-
-	# Plot the first two principal components 
-	# plt.figure(k+1)
-	# plt.scatter(newData2[:,0],newData2[:,1], c=target)
-	# plt.xlabel('1st Principal Component')
-	# plt.ylabel('2nd Principal Component')
-	# plt.title("Projection to the top-2 Principal Components" + name)
-	# plt.draw()
 
 	# Plot the first three principal components 
 	fig = plt.figure(k)
@@ -44,8 +33,8 @@ def show(k,path,name):
 	ax.set_title("Projection to the top-3 Principal Components " + name)
 	plt.draw()  
 
-show(1,'../allFeatures/yale_face_db/leye_features.csv','left eye')
-show(3,'../allFeatures/yale_face_db/reye_features.csv','right eye')
-show(5,'../allFeatures/yale_face_db/mouth_features.csv','mouth eye')
-show(7,'../allFeatures/yale_face_db/nose_features.csv','nose eye')
+show(1,'../allFeatures/yale_face_db/training/leye_features.csv','left eye')
+show(3,'../allFeatures/yale_face_db/training/reye_features.csv','right eye')
+show(5,'../allFeatures/yale_face_db/training/mouth_features.csv','mouth eye')
+show(7,'../allFeatures/yale_face_db/training/nose_features.csv','nose eye')
 plt.show()

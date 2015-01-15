@@ -1,3 +1,4 @@
+#include "constants.h"
 #include "featureDetection.h"
 #include "getSiftKeypoints.h"
 #include "faceDetection.h"
@@ -13,10 +14,6 @@
 
 using namespace std;
 using namespace cv ;
-
-#define selectFeatures  false 
-#define pca false
-#define nb_celebrities 3
 
 bool waytosort(KeyPoint p1, KeyPoint p2){ return p1.response > p2.response ;}
 
@@ -53,7 +50,7 @@ void writeMatToFile(Mat& m, vector<int> classesUnclustered,String filename){
 
 
 Mat selectCols(vector<int> goodCols,Mat m){
-	if(!selectFeatures)
+	if(goodCols.size() == 128)
 		return m ;
 	else{
 		int n = goodCols.size() ;
@@ -179,15 +176,28 @@ void showPCA(Mat featuresUnclustered,vector<int> classesUnclustered, String titl
 	}
 }
 
-pair<Mat,Mat> computePCA(Mat featuresUnclustered,int nb_coponents){
-    PCA principalCA(featuresUnclustered, Mat(), CV_PCA_DATA_AS_ROW, nb_coponents);
-    Mat eigenvectors = principalCA.eigenvectors.clone();
-	Mat principalVectors = Mat(nb_coponents , eigenvectors.cols,CV_32FC1);
-	Mat mean = principalCA.mean.clone() ;
 
-	cout << "Mean size : " << mean.size() << endl ;
-    for(int j=0;j<nb_coponents;j++){
-		principalVectors.row(j) = eigenvectors.row(j) ;
+vector<vector<int> > getGoodCols(int nb){
+	vector<vector<int> > goodCols ;
+
+	    // These will be the good cols for each part of the face
+	int featuresLEye[] = {22,2,11,35,20,6,3,50,10,4,30,115,1,107,18,52,68,118,65,60,34,123,89,114,53,69,12,46,92,13,93,25,55,79,113,116,21,88,9,122,117,16,42,64,81,31,61,84,8,44,7,39,38,15,104,37,87,54,82,48,32,24,49,36,62,90,78,72,56,124,63,121,74,106,0,59,100,73,120,119,108,76,86,43,58,27,70,105,26,126,95,66,91,83,75,41,97,5,112,45,111,57,99,96,40,23,33,29,77,47,14,85,19,67,125,17,94,51,101,71,80,127,98,28,109,110,103,102};
+	int featuresREye[] = {14,6,24,8,18,73,4,42,12,34,99,36,30,11,114,46,44,66,45,21,32,84,38,16,116,65,10,110,20,70,26,1,23,40,53,47,122,67,71,79,69,105,111,100,33,0,56,85,51,98,64,39,7,48,76,118,80,113,109,50,37,31,115,120,68,5,3,92,9,15,22,17,104,35,2,96,54,78,90,75,88,29,52,81,106,87,72,41,121,83,43,25,86,112,60,82,124,49,97,108,74,94,91,103,126,77,107,102,28,19,125,61,101,59,58,55,119,127,117,93,13,123,89,62,95,27,57,63};
+	int featuresMouth[]= {88,94,56,24,120,126,36,86,99,90,89,100,106,57,58,37,103,125,14,3,102,62,112,95,78,32,33,49,82,98,16,68,53,127,101,63,64,84,47,80,67,10,60,43,2,52,118,42,77,69,114,75,79,0,93,113,87,50,48,44,17,27,45,73,22,115,35,55,72,76,105,13,74,15,21,41,54,18,65,26,4,40,38,12,81,97,92,117,119,31,8,111,23,20,83,11,59,107,28,7,116,104,46,1,61,91,30,39,124,121,34,25,96,9,5,51,108,109,71,66,123,85,6,29,110,19,70,122 };
+	int featuresNose[]= {3,2,88,14,26,22,90,24,56,94,120,86,126,68,17,89,78,30,32,4,47,82,81,75,41,40,64,44,95,115,52,92,74,105,35,60,16,18,125,43,11,76,96,49,69,65,23,37,99,36,33,97,53,84,118,83,13,121,57,21,93,48,101,38,112,39,10,73,80,29,100,31,98,20,67,45,103,19,102,7,6,111,109,107,79,0,106,116,46,12,42,15,28,117,77,59,61,27,50,110,8,85,119,123,55,127,87,51,54,71,70,72,34,124,108,104,113,9,1,66,25,63,62,91,58,122,114,5};
+
+	vector<int> fLEye, fREye, fMouth, fNose ;
+	for(int k=0;k<nb;k++){
+		fLEye.push_back(featuresLEye[k]);
+		fREye.push_back(featuresREye[k]);
+		fMouth.push_back(featuresMouth[k]);
+		fNose.push_back(featuresNose[k]);
 	}
-	return pair<Mat,Mat>(principalVectors.t(),mean) ;
+
+	goodCols.push_back(fLEye);
+	goodCols.push_back(fREye);
+	goodCols.push_back(fMouth);
+	goodCols.push_back(fNose);
+
+	return goodCols ;
 }

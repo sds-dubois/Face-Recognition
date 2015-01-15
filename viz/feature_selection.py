@@ -57,11 +57,10 @@ def show(k,path,name):
 	dataBis = my_data[:,1:129]
 	target= my_data[:,0]
 	
-	num_feat = 60
+	num_feat = 128
 	print('Select ' + str(num_feat) + ' best features')
 
 	# For each feature we get its feature selection value (x^2 or IG)
-	## TODO: uncommnent chiSQ(X,Y) to compute chi^2 measure
 	gainIG = infogain(data,target)
 	gainChi = chiSQ(data,target)
 	index1 = argsort(gainIG)[::-1]
@@ -73,6 +72,7 @@ def show(k,path,name):
 	
 	print(index2[:num_feat])
 	f = csv.writer(f,delimiter=',')
+	f.writerow(index1[:num_feat])
 	f.writerow(index2[:num_feat])
 	newData3 = show3D(data)
 	newDataBis3 = show3D(dataBis)
@@ -107,10 +107,10 @@ def display_var(path):
 	
 		
 
-# show(2,'../allFeatures/yale_face_db/leye_features.csv','left_eye')
-# show(3,'../allFeatures/yale_face_db/reye_features.csv','right_eye')
-# show(4,'../allFeatures/yale_face_db/mouth_features.csv','mouth')
-# show(5,'../allFeatures/yale_face_db/nose_features.csv','nose')
+show(2,'../allFeatures/yale_face_db/training/leye_features.csv','left_eye')
+show(3,'../allFeatures/yale_face_db/training/reye_features.csv','right_eye')
+show(4,'../allFeatures/yale_face_db/training/mouth_features.csv','mouth')
+show(5,'../allFeatures/yale_face_db/training/nose_features.csv','nose')
 
 # abs = zeros((128,1))
 # for k in range(1,129):
@@ -134,38 +134,5 @@ def display_var(path):
 # plt.ylabel('Variance')
 # plt.legend()
 # plt.show()
-
-my_data = genfromtxt('../allFeatures/yale_face_db/allFeatures.csv', delimiter=',')
-data = my_data[:,1:121]
-dataBis = my_data[:,1:121]
-target= my_data[:,0]
-
-num_feat = 20
-print('Select ' + str(num_feat) + ' best features')
-
-# For each feature we get its feature selection value (x^2 or IG)
-## TODO: uncommnent chiSQ(X,Y) to compute chi^2 measure
-gainIG = infogain(data,target)
-gainChi = chiSQ(data,target)
-index1 = argsort(gainIG)[::-1]
-index2 = argsort(gainChi)[::-1]
-# Select the top num_feat features
-data = data[:,index2[:num_feat]]
-
-print(index2[:num_feat])
-newData3 = show3D(data)
-newDataBis3 = show3D(dataBis)
-
-fig = plt.figure(6)
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(newData3[:,0],newData3[:,1], newData3[:,2], c=target)
-ax.set_title("Projection to the top-3 eigenvectors after feature selection -all")
-plt.draw()  
-
-fig = plt.figure(7)
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(newDataBis3[:,0],newDataBis3[:,1], newDataBis3[:,2], c=target)
-ax.set_title("Projection to the top-3 eigenvectors -all")
-plt.draw()  
 
 plt.show()
