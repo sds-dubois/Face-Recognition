@@ -1,6 +1,6 @@
-Face Recognition (INF552 Project)
+## Face Recognition (INF552 Project) ##
 
-The goal of the project is to recognize faces on an image. To do this, we train classifiers on a dataset (training images) and examine their results on a test set.
+### The goal of the project is to recognize faces on an image. To do this, we train classifiers on a dataset (training images) and examine their results on a test set. ###
 
 In this project, there are multiple challenges : 
 
@@ -10,8 +10,18 @@ In this project, there are multiple challenges :
 
 
 
-C++ code using OpenCv & Boost.
+.
 
+
+C++ code using OpenCv & Boost.
+Please read the report to understand how to use the code.
+
+Best methods are implemented in the file *featureDetection.cpp*. One should first run *featureExtraction* to extract features on training and test images (this has already been done for 3 people of the Yale Face DB, see in data/yale_face_db). Then one can build classifiers and see prediction results using different methods (*classifyAndPredict*, *classifyAndPredictSingleDescriptor* or *clusteringClassifyAndPredict*). Many comments are written in header files to explain how to use these functions and what are their differences.
+
+A Bag-of-Words method is also implemented in *BOWmethod.cpp* but the other ones are much better.
+
+.
+ 
 Functions to run only in debug mode :
 
 - classifyAndPredict (still fast)
@@ -20,7 +30,7 @@ Functions to run only in debug mode :
 - computeBowTestDesciptors
 
 
-Directory Structure
+Directory Structure :
 
 - allFeatures ..............................The features extracted on images are stored here
 - classifiers................................................................The classifiers are stored here
