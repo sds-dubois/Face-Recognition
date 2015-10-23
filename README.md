@@ -1,26 +1,25 @@
 ## Face Recognition (INF552 Project) ##
 
-### The goal of the project is to recognize faces on an image. To do this, we train classifiers on a dataset (training images) and examine their results on a test set. ###
-
-In this project, there are multiple challenges : 
-
-- extract features from the image : face, eyes, mouth, nose
-- represent features in a vector space
-- create classifiers
-
-
-
-.
-
+### This project aims at recognizing faces on pictures, by focusing on computer vision techniques and using simple machine learning tools. ###
 
 C++ code using OpenCv & Boost.
 Please read the report for more details.
 
+----------------
+The challenges tackled are : 
+- extracting features from the image
+- representing these features in a vector space
+- building and managing classifiers  
+
+Different methods are implemented to extract useful features from the pictures. In particular, one of our successful methods is to detect some key zones in the picture (like the face /eyes/mouth/ nose) and then compute SIFT descriptors on these particular zones.  
+Classification is done with multi-class SVM.  
+
+----------------------------
 Best methods are implemented in the file *featureDetection.cpp*. One should first run *featureExtraction* to extract features on training and test images (this has already been done for 3 people of the Yale Face DB, see in data/yale_face_db). Then one can build classifiers and see prediction results using different methods (*classifyAndPredict*, *classifyAndPredictSingleDescriptor* or *clusteringClassifyAndPredict*). Many comments are written in header files to explain how to use these functions and what are their differences.
 
 A Bag-of-Words method is also implemented in *BOWmethod.cpp* but the other ones are much better.
 
-.
+--------------------
  
 Functions to run only in debug mode :
 
