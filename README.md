@@ -3,7 +3,8 @@
 ### This project aims at recognizing faces on pictures, by focusing on computer vision techniques and using simple machine learning tools. ###
 
 C++ code using OpenCv & Boost.
-Please read the report for more details.
+Please read the report for more details.  
+You can also read the article [here](http://sds-dubois.github.io/2015/02/01/Face-Recognition.html) to get an overview of the project.  
 
 ----------------
 The challenges tackled are : 
